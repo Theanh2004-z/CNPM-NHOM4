@@ -155,6 +155,102 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionMethod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RequiredFieldsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequirementsDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("AdmissionMethods");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionRound", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<short>("AdmissionYear")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("EndAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("StartAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("AdmissionRounds");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationStatus", b =>
+                {
+                    b.Property<byte>("Id")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("ApplicationStatuses");
+                });
+
             modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -227,6 +323,99 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("TuyenSinhOnline.Models.Major", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Majors");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.RoundMajor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MajorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quota")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoundId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MajorId");
+
+                    b.HasIndex("RoundId", "MajorId")
+                        .IsUnique();
+
+                    b.ToTable("RoundMajors");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.RoundMajorMethod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MethodId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoundMajorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MethodId");
+
+                    b.HasIndex("RoundMajorId", "MethodId")
+                        .IsUnique();
+
+                    b.ToTable("RoundMajorMethods");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -276,6 +465,64 @@ namespace TuyenSinhOnline.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.RoundMajor", b =>
+                {
+                    b.HasOne("TuyenSinhOnline.Models.Major", "Major")
+                        .WithMany("RoundMajors")
+                        .HasForeignKey("MajorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TuyenSinhOnline.Models.AdmissionRound", "Round")
+                        .WithMany("RoundMajors")
+                        .HasForeignKey("RoundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Major");
+
+                    b.Navigation("Round");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.RoundMajorMethod", b =>
+                {
+                    b.HasOne("TuyenSinhOnline.Models.AdmissionMethod", "Method")
+                        .WithMany("RoundMajorMethods")
+                        .HasForeignKey("MethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TuyenSinhOnline.Models.RoundMajor", "RoundMajor")
+                        .WithMany("RoundMajorMethods")
+                        .HasForeignKey("RoundMajorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Method");
+
+                    b.Navigation("RoundMajor");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionMethod", b =>
+                {
+                    b.Navigation("RoundMajorMethods");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionRound", b =>
+                {
+                    b.Navigation("RoundMajors");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.Major", b =>
+                {
+                    b.Navigation("RoundMajors");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.RoundMajor", b =>
+                {
+                    b.Navigation("RoundMajorMethods");
                 });
 #pragma warning restore 612, 618
         }

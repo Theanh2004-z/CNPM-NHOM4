@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Trang chủ";
+    var signedIn = User.Identity?.IsAuthenticated == true;
+}
+<section class="hero">
+    <div class="shell hero-grid">
+        <div class="hero-copy">
+            <span class="eyebrow"><span class="tiny-line" aria-hidden="true"></span> TUYỂN SINH TRỰC TUYẾN</span>
+            <h1>Khởi đầu mới.<br /><span>Cơ hội phía trước.</span></h1>
+            <p class="hero-description">Bắt đầu hành trình tuyển sinh với tài khoản của bạn. Một nơi kết nối thí sinh, cán bộ tuyển sinh và nhà quản trị.</p>
+            <div class="hero-actions">
+                @if (signedIn)
+                { <a class="button button-primary" asp-controller="Dashboard" asp-action="Index">Vào không gian của tôi <span aria-hidden="true">↗</span></a> }
+                else
+                {
+                    <a class="button button-primary" asp-controller="Account" asp-action="Register">Đăng ký tài khoản thí sinh <span aria-hidden="true">↗</span></a>
+                    <a class="text-link" asp-controller="Account" asp-action="Login">Đã có tài khoản? Đăng nhập <span aria-hidden="true">→</span></a>
+                }
+            </div>
+            <div class="hero-note"><span class="check-circle" aria-hidden="true">✓</span> Tài khoản riêng · Truy cập theo vai trò</div>
+        </div>
+        <div class="journey-card">
+            <div class="card-topline"><span class="eyebrow">CÙNG MỘT KẾT NỐI</span><span class="small-orbit" aria-hidden="true">↗</span></div>
+            <div class="journey-illustration" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="orbit-center">TS</span><span class="orbit-label label-one">Thí sinh</span><span class="orbit-label label-two">Cán bộ</span><span class="orbit-label label-three">Quản trị</span></div>
+            <h2>Mỗi vai trò,<br />một không gian phù hợp.</h2><p>Đăng nhập một lần, đến đúng nơi bạn cần.</p>
+            <div class="card-divider"></div><div class="journey-bottom"><span>Rõ ràng. Thuận tiện. Kết nối.</span><span aria-hidden="true">↗</span></div>
+        </div>
+    </div>
+</section>
+<section class="roles-section shell" aria-labelledby="roles-title">
+    <div class="section-heading"><div><span class="eyebrow">DÀNH CHO BẠN</span><h2 id="roles-title">Bạn tham gia với vai trò nào?</h2></div><p>Quyền truy cập được thiết lập theo<br class="desktop-break" /> trách nhiệm của từng tài khoản.</p></div>
+    <div class="role-grid">
+        <article class="role-card"><span class="role-number">01 / THÍ SINH</span><h3>Bắt đầu từ tài khoản</h3><p>Tự đăng ký, đăng nhập và truy cập không gian dành riêng cho thí sinh.</p><a class="text-link" asp-controller="Account" asp-action="@(signedIn ? "Login" : "Register")">@(signedIn ? "Truy cập tài khoản" : "Tạo tài khoản thí sinh") <span aria-hidden="true">→</span></a></article>
+        <article class="role-card"><span class="role-number">02 / CÁN BỘ TUYỂN SINH</span><h3>Không gian nghiệp vụ</h3><p>Đăng nhập bằng tài khoản được cấp để vào khu vực cán bộ tuyển sinh.</p><a class="text-link" asp-controller="Account" asp-action="Login">Đăng nhập cán bộ <span aria-hidden="true">→</span></a></article>
+        <article class="role-card"><span class="role-number">03 / QUẢN TRỊ VIÊN</span><h3>Truy cập có phân quyền</h3><p>Khu vực quản trị chỉ dành cho tài khoản được cấp quyền quản trị viên.</p><a class="text-link" asp-controller="Account" asp-action="Login">Đăng nhập quản trị <span aria-hidden="true">→</span></a></article>
+    </div>
+    <div class="scope-note"><span class="status-dot" aria-hidden="true"></span><p><strong>Phiên bản đang phát triển.</strong> Hiện đã hỗ trợ tài khoản và phân quyền. Các chức năng hồ sơ, xét tuyển và tra cứu kết quả sẽ được bổ sung sau.</p></div>
+</section>

@@ -1,0 +1,18 @@
+@model TuyenSinhOnline.Models.Account.RegisterViewModel
+@{ ViewData["Title"] = "Đăng ký tài khoản"; }
+<section class="shell auth-section auth-register">
+    <aside class="auth-intro"><span class="eyebrow">BƯỚC ĐẦU TIÊN</span><h1>Mở tài khoản.<br /><span>Mở hành trình mới.</span></h1><p>Đăng ký tài khoản thí sinh bằng email của bạn. Sau khi đăng ký thành công, bạn có thể truy cập ngay không gian thí sinh.</p><div class="intro-rule"></div><div class="intro-item"><span class="step-circle" aria-hidden="true">1</span><div><strong>Điền thông tin của bạn</strong><p>Họ tên và email giúp nhận diện tài khoản.</p></div></div><div class="intro-item"><span class="step-circle" aria-hidden="true">2</span><div><strong>Thiết lập mật khẩu</strong><p>Chọn mật khẩu riêng và giữ bí mật với người khác.</p></div></div><div class="intro-item"><span class="step-circle" aria-hidden="true">3</span><div><strong>Vào không gian thí sinh</strong><p>Tài khoản mới nhận quyền thí sinh.</p></div></div><a class="text-link" asp-controller="Home" asp-action="Index"><span aria-hidden="true">←</span> Về trang chủ</a></aside>
+    <div class="auth-panel"><span class="form-kicker">DÀNH CHO THÍ SINH</span><h2>Tạo tài khoản</h2><p class="form-description">Điền đầy đủ thông tin bên dưới để bắt đầu.</p>
+        <form asp-controller="Account" asp-action="Register" method="post">
+            <input asp-for="ReturnUrl" type="hidden" />
+            <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+            <div class="form-field"><label asp-for="FullName">Họ và tên</label><input asp-for="FullName" autocomplete="name" placeholder="Nguyễn Văn An" autofocus /><span asp-validation-for="FullName" class="field-error"></span></div>
+            <div class="form-field"><label asp-for="Email">Địa chỉ email</label><input asp-for="Email" type="email" autocomplete="username" placeholder="ban@example.com" /><span asp-validation-for="Email" class="field-error"></span></div>
+            <div class="form-field"><label asp-for="Password">Mật khẩu</label><div class="password-field"><input asp-for="Password" type="password" autocomplete="new-password" aria-describedby="password-hint" placeholder="Tạo mật khẩu của bạn" /><button class="password-toggle" type="button" data-password-target="Password" aria-label="Hiện mật khẩu" aria-pressed="false">Hiện</button></div><p id="password-hint" class="field-hint">Từ 8–100 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</p><span asp-validation-for="Password" class="field-error"></span></div>
+            <div class="form-field"><label asp-for="ConfirmPassword">Nhập lại mật khẩu</label><div class="password-field"><input asp-for="ConfirmPassword" type="password" autocomplete="new-password" placeholder="Nhập lại mật khẩu vừa tạo" /><button class="password-toggle" type="button" data-password-target="ConfirmPassword" aria-label="Hiện mật khẩu nhập lại" aria-pressed="false">Hiện</button></div><span asp-validation-for="ConfirmPassword" class="field-error"></span></div>
+            <button class="button button-primary button-full" type="submit">Tạo tài khoản thí sinh <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="auth-switch">Đã có tài khoản? <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Đăng nhập</a></p>
+    </div>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

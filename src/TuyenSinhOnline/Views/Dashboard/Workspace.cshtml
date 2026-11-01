@@ -1,0 +1,14 @@
+@model WorkspaceViewModel
+@{ ViewData["Title"] = Model.Title; }
+<section class="workspace-banner"><div class="shell"><span class="eyebrow">@Model.Eyebrow</span><div class="workspace-heading"><div><p class="welcome-line">Xin chào, @Model.UserFullName</p><h1>@Model.Title</h1><p class="workspace-description">@Model.Description</p></div><span class="role-badge"><span class="status-dot" aria-hidden="true"></span>@Model.RoleLabel</span></div></div></section>
+<section class="shell workspace-body"><div class="workspace-main"><div class="section-heading"><div><span class="eyebrow">KHÔNG GIAN CỦA BẠN</span><h2>Các chức năng</h2></div></div><div class="workspace-grid">
+    @foreach (var link in Model.Links)
+    {
+        <article class="workspace-card"><span class="workspace-card-icon" aria-hidden="true">↗</span><h3>@link.Title</h3><p>@link.Description</p>
+            @if (!string.IsNullOrWhiteSpace(link.Url))
+            { <a class="text-link" href="@link.Url">Truy cập <span aria-hidden="true">→</span></a> }
+            else
+            { <span class="future-label">Chưa triển khai</span> }
+        </article>
+    }
+</div></div><aside class="account-summary"><span class="summary-avatar" aria-hidden="true">TS</span><span class="eyebrow">TÀI KHOẢN HIỆN TẠI</span><h2>@Model.UserFullName</h2><p>@Model.RoleLabel</p><div class="card-divider"></div><div class="summary-note"><span class="check-circle" aria-hidden="true">✓</span><span>Đã đăng nhập và xác định quyền truy cập.</span></div><form asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="button button-outline button-full">Đăng xuất</button></form></aside></section>

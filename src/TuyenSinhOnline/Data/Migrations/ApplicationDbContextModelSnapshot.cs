@@ -169,13 +169,7 @@ namespace TuyenSinhOnline.Data.Migrations
                         .HasColumnType("nvarchar(30)");
 
                     b.Property<bool>("IsActive")
-<<<<<<< HEAD
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-=======
                         .HasColumnType("bit");
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -188,16 +182,9 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.Property<string>("RequirementsDescription")
                         .HasColumnType("nvarchar(max)");
 
-<<<<<<< HEAD
-                    b.HasKey("Id")
-                        .HasName("PK__Admissio__3214EC075A67711C");
-
-                    b.HasIndex(new[] { "Code" }, "UQ_AdmissionMethods_Code")
-=======
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
                         .IsUnique();
 
                     b.ToTable("AdmissionMethods");
@@ -223,13 +210,7 @@ namespace TuyenSinhOnline.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
-<<<<<<< HEAD
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-=======
                         .HasColumnType("bit");
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -239,16 +220,9 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.Property<DateTime>("StartAt")
                         .HasColumnType("datetime2");
 
-<<<<<<< HEAD
-                    b.HasKey("Id")
-                        .HasName("PK__Admissio__3214EC071E0265CA");
-
-                    b.HasIndex(new[] { "Code" }, "UQ_AdmissionRounds_Code")
-=======
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
                         .IsUnique();
 
                     b.ToTable("AdmissionRounds");
@@ -269,16 +243,9 @@ namespace TuyenSinhOnline.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-<<<<<<< HEAD
-                    b.HasKey("Id")
-                        .HasName("PK__Applicat__3214EC07D4936CAD");
-
-                    b.HasIndex(new[] { "Code" }, "UQ_ApplicationStatuses_Code")
-=======
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
                         .IsUnique();
 
                     b.ToTable("ApplicationStatuses");
@@ -344,22 +311,14 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                        .IsUnique()
+                        .HasDatabaseName("EmailIndex")
+                        .HasFilter("[NormalizedEmail] IS NOT NULL");
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex(new[] { "NormalizedEmail" }, "EmailIndex")
-                        .IsUnique()
-                        .HasDatabaseName("EmailIndex1")
-                        .HasFilter("([NormalizedEmail] IS NOT NULL)");
-
-                    b.HasIndex(new[] { "NormalizedUserName" }, "UserNameIndex")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex1")
-                        .HasFilter("([NormalizedUserName] IS NOT NULL)");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -378,42 +337,23 @@ namespace TuyenSinhOnline.Data.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("CreatedAt")
-<<<<<<< HEAD
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-=======
                         .HasColumnType("datetime2");
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool>("IsActive")
-<<<<<<< HEAD
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-=======
                         .HasColumnType("bit");
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-<<<<<<< HEAD
-                    b.HasKey("Id")
-                        .HasName("PK__Majors__3214EC0790908F8A");
-
-                    b.HasIndex(new[] { "Code" }, "UQ_Majors_Code")
-=======
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
                         .IsUnique();
 
                     b.ToTable("Majors");
@@ -428,13 +368,7 @@ namespace TuyenSinhOnline.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("IsEnabled")
-<<<<<<< HEAD
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-=======
                         .HasColumnType("bit");
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.Property<int>("MajorId")
                         .HasColumnType("int");
@@ -445,20 +379,11 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.Property<int>("RoundId")
                         .HasColumnType("int");
 
-<<<<<<< HEAD
-                    b.HasKey("Id")
-                        .HasName("PK__RoundMaj__3214EC074183A782");
-
-                    b.HasIndex("MajorId");
-
-                    b.HasIndex(new[] { "RoundId", "MajorId" }, "UQ_RoundMajors_Round_Major")
-=======
                     b.HasKey("Id");
 
                     b.HasIndex("MajorId");
 
                     b.HasIndex("RoundId", "MajorId")
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
                         .IsUnique();
 
                     b.ToTable("RoundMajors");
@@ -473,13 +398,7 @@ namespace TuyenSinhOnline.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("IsEnabled")
-<<<<<<< HEAD
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-=======
                         .HasColumnType("bit");
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.Property<int>("MethodId")
                         .HasColumnType("int");
@@ -487,20 +406,11 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.Property<int>("RoundMajorId")
                         .HasColumnType("int");
 
-<<<<<<< HEAD
-                    b.HasKey("Id")
-                        .HasName("PK__RoundMaj__3214EC07C92E492B");
-
-                    b.HasIndex("MethodId");
-
-                    b.HasIndex(new[] { "RoundMajorId", "MethodId" }, "UQ_RoundMajorMethods")
-=======
                     b.HasKey("Id");
 
                     b.HasIndex("MethodId");
 
                     b.HasIndex("RoundMajorId", "MethodId")
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
                         .IsUnique();
 
                     b.ToTable("RoundMajorMethods");
@@ -562,24 +472,14 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.HasOne("TuyenSinhOnline.Models.Major", "Major")
                         .WithMany("RoundMajors")
                         .HasForeignKey("MajorId")
-<<<<<<< HEAD
-                        .IsRequired()
-                        .HasConstraintName("FK_RoundMajors_Majors");
-=======
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.HasOne("TuyenSinhOnline.Models.AdmissionRound", "Round")
                         .WithMany("RoundMajors")
                         .HasForeignKey("RoundId")
-<<<<<<< HEAD
-                        .IsRequired()
-                        .HasConstraintName("FK_RoundMajors_AdmissionRounds");
-=======
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.Navigation("Major");
 
@@ -591,24 +491,14 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.HasOne("TuyenSinhOnline.Models.AdmissionMethod", "Method")
                         .WithMany("RoundMajorMethods")
                         .HasForeignKey("MethodId")
-<<<<<<< HEAD
-                        .IsRequired()
-                        .HasConstraintName("FK_RoundMajorMethods_AdmissionMethods");
-=======
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.HasOne("TuyenSinhOnline.Models.RoundMajor", "RoundMajor")
                         .WithMany("RoundMajorMethods")
                         .HasForeignKey("RoundMajorId")
                         .OnDelete(DeleteBehavior.Cascade)
-<<<<<<< HEAD
-                        .IsRequired()
-                        .HasConstraintName("FK_RoundMajorMethods_RoundMajors");
-=======
                         .IsRequired();
->>>>>>> 51e7280e981fafafc42265ebe3032ba15f2dc522
 
                     b.Navigation("Method");
 

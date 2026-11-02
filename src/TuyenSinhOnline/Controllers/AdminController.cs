@@ -13,13 +13,15 @@ public class AdminController : Controller
     public IActionResult Index() => View("~/Views/Dashboard/Workspace.cshtml", new WorkspaceViewModel
     {
         Title = "Không gian quản trị", Eyebrow = "QUẢN TRỊ HỆ THỐNG",
-        Description = "Bạn đã đăng nhập bằng tài khoản quản trị viên. Các chức năng quản trị được phát triển theo từng Sprint.",
+        Description = "Quản lý danh mục và kế hoạch tuyển sinh: ngành học, phương thức, thời gian, chỉ tiêu và cấu hình áp dụng.",
         RoleLabel = "Quản trị viên", UserFullName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity!.Name!,
         Links =
         [
-            new() { Title = "Trang thông tin chung", Description = "Trở về trang giới thiệu hệ thống.", Url = "/" },
+            new() { Title = "Ngành học", Description = "Thêm, sửa, tìm kiếm và ẩn ngành học.", Url = "/Majors" },
+            new() { Title = "Phương thức xét tuyển", Description = "Quản lý phương thức và điều kiện xét tuyển.", Url = "/AdmissionMethods" },
+            new() { Title = "Đợt tuyển sinh", Description = "Cấu hình thời gian mở, đóng và theo dõi trạng thái các đợt.", Url = "/AdmissionRounds" },
+            new() { Title = "Chỉ tiêu và phương thức áp dụng", Description = "Gắn ngành với đợt tuyển sinh, chỉ tiêu và các phương thức được áp dụng.", Url = "/Quotas" },
             new() { Title = "Quản lý tài khoản", Description = "Giao diện quản lý tài khoản sẽ được bổ sung theo kế hoạch." },
-            new() { Title = "Cấu hình tuyển sinh", Description = "Chờ tích hợp các phần ngành, chỉ tiêu, phương thức và thời gian tuyển sinh." }
         ]
     });
 }

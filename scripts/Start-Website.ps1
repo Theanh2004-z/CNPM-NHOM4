@@ -1,5 +1,4 @@
 param(
-    [ValidateRange(1024, 65535)][int]$Port = 5080,
     [switch]$NoDemo,
     [switch]$NoBrowser
 )
@@ -11,9 +10,6 @@ Set-Location -LiteralPath $projectRoot
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     throw 'Can cai .NET SDK 9 truoc khi chay. Xem README.md.'
 }
-if (-not (Get-Command SqlLocalDB.exe -ErrorAction SilentlyContinue)) {
-    throw 'Can cai SQL Server Express LocalDB, hoac cau hinh SQL Server rieng theo README.md.'
-}
 
 $env:DOTNET_CLI_HOME = Join-Path $projectRoot '.local\dotnet'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
@@ -21,13 +17,7 @@ $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
 $env:DOTNET_GENERATE_ASPNET_CERTIFICATE = 'false'
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
 
-$instances = @(& SqlLocalDB.exe info)
-if ($instances -notcontains 'TuyenSinhOnlineDev') {
-    & SqlLocalDB.exe create TuyenSinhOnlineDev
-    if ($LASTEXITCODE -ne 0) { throw 'Khong tao duoc LocalDB.' }
-}
-& SqlLocalDB.exe start TuyenSinhOnlineDev
-if ($LASTEXITCODE -ne 0) { throw 'Khong khoi dong duoc LocalDB.' }
+Write-Host 'Su dung SQL Server theo ConnectionStrings:DefaultConnection. Can khoi dong dich vu SQL Server truoc.'
 
 $localDirectory = Join-Path $projectRoot '.local'
 New-Item -ItemType Directory -Path $localDirectory -Force | Out-Null
@@ -62,7 +52,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Tai thu vien that bai. Kiem tra ket noi Intern
 & dotnet build TuyenSinhOnline.sln --no-restore --verbosity minimal
 if ($LASTEXITCODE -ne 0) { throw 'Build that bai. Xem thong bao phia tren.' }
 
-$websiteUrl = 'http://localhost:' + $Port
+$websiteUrl = 'http://localhost:5080'
 Write-Host ('Mo website: ' + $websiteUrl)
 Write-Host 'Dung website bang Ctrl+C trong cua so nay.'
 if (-not $NoBrowser) { Start-Process $websiteUrl }

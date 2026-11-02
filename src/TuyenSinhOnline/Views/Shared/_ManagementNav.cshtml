@@ -1,0 +1,9 @@
+@{ var controller = ViewContext.RouteData.Values["controller"]?.ToString(); }
+<nav class="management-tabs" aria-label="Quản lý tuyển sinh">
+    <a asp-controller="Admin" asp-action="Index">Tổng quan</a>
+    <a class="@(controller == "Majors" ? "selected" : "")" asp-controller="Majors" asp-action="Index">Ngành học</a>
+    <a class="@(controller == "AdmissionMethods" ? "selected" : "")" asp-controller="AdmissionMethods" asp-action="Index">Phương thức</a>
+    <a class="@(controller == "AdmissionRounds" ? "selected" : "")" asp-controller="AdmissionRounds" asp-action="Index">Đợt tuyển sinh</a>
+    <a class="@(controller == "Quotas" ? "selected" : "")" asp-controller="Quotas" asp-action="Index">Chỉ tiêu &amp; áp dụng</a>
+</nav>
+@if (TempData["ManagementSuccess"] is string success) { <div class="notice success" role="status">@success</div> }

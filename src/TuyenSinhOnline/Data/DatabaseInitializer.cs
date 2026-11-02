@@ -11,7 +11,7 @@ public static class DatabaseInitializer
         IHostEnvironment environment, bool applyMigrations)
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
-        if (applyMigrations) await db.Database.MigrateAsync();
+      //  if (applyMigrations) await db.Database.MigrateAsync();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var role in RoleNames.All)
         {

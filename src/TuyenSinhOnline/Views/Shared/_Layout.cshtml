@@ -29,6 +29,8 @@
                     @if (signedIn)
                     {
                         <a class="nav-link @(currentController != "Home" && currentController != "Account" ? "is-active" : "")" asp-controller="Dashboard" asp-action="Index">Không gian của tôi</a>
+                        @if (User.IsInRole(TuyenSinhOnline.Security.RoleNames.Administrator))
+                        { <a class="nav-link" asp-controller="AdmissionRounds" asp-action="Index">Quản lý tuyển sinh</a> }
                     }
                 </div>
                 <div class="nav-actions">

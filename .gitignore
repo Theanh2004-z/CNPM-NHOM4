@@ -490,3 +490,15 @@ $RECYCLE.BIN/
 
 docs/
 
+
+*.docx
+
+
+# Keep the Sprint 1 handoff and verification screenshots in source control.
+!docs/
+docs/*
+!docs/SPRINT1-HOANG-THAO.md
+!docs/screenshots/
+docs/screenshots/*
+!docs/screenshots/quota-mobile.jpg
+!docs/screenshots/management-desktop.jpg

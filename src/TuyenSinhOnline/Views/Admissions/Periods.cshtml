@@ -1,0 +1,43 @@
+﻿@model IEnumerable<TuyenSinhOnline.Models.AdmissionRound>
+@{
+    ViewData["Title"] = "Quản lý Đợt tuyển sinh";
+}
+
+<div class="container mt-4">
+    <h2>Quản lý Đợt và Thời gian tuyển sinh</h2>
+    <hr />
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Mã đợt</th>
+                <th>Tên đợt tuyển sinh</th>
+                <th>Năm tuyển sinh</th>
+                <th>Thời gian bắt đầu</th>
+                <th>Thời gian kết thúc</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Code</td>
+                        <td>@item.Name</td>
+                        <td>@item.AdmissionYear</td>
+                        <td>@item.StartAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@item.EndAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@(item.IsActive ? "Đang mở" : "Đã đóng")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center">Chưa có dữ liệu đợt tuyển sinh trong database.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

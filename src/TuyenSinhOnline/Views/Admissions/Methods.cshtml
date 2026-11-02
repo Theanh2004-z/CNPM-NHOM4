@@ -1,0 +1,39 @@
+﻿@model IEnumerable<TuyenSinhOnline.Models.AdmissionMethod>
+@{
+    ViewData["Title"] = "Quản lý Phương thức xét tuyển";
+}
+
+<div class="container mt-4">
+    <h2>Quản lý Phương thức xét tuyển</h2>
+    <hr />
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Mã phương thức</th>
+                <th>Tên phương thức</th>
+                <th>Mô tả yêu cầu</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Code</td>
+                        <td>@item.Name</td>
+                        <td>@item.RequirementsDescription</td>
+                        <td>@(item.IsActive ? "Đang hoạt động" : "Ngừng")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" class="text-center">Chưa có dữ liệu phương thức xét tuyển trong database.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

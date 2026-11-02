@@ -1,0 +1,82 @@
+@model CandidateHome
+@{ ViewData["Title"] = "Cổng thí sinh"; }
+@section Styles { <link rel="stylesheet" href="~/css/candidate.css" asp-append-version="true" /> }
+<div class="candidate-portal">
+    <section class="candidate-hero">
+        <div class="shell candidate-hero-inner">
+            <div>
+                <span class="candidate-role"><span class="status-dot" aria-hidden="true"></span>CỔNG THÍ SINH</span>
+                <p class="candidate-greeting">Xin chào, @Model.FullName</p>
+                <h1>Bắt đầu từ một<br /><span>ngành học phù hợp.</span></h1>
+                <p class="candidate-intro">Tìm hiểu ngành học, chỉ tiêu và điều kiện xét tuyển trước khi chuẩn bị hồ sơ của bạn.</p>
+                <a class="button button-primary" href="#tra-cuu">Khám phá ngành học <span aria-hidden="true">↓</span></a>
+            </div>
+            <aside class="candidate-identity" aria-labelledby="candidate-account-title">
+                <span class="candidate-avatar" aria-hidden="true">TS</span>
+                <span class="eyebrow">TÀI KHOẢN CỦA BẠN</span>
+                <h2 id="candidate-account-title">@Model.FullName</h2>
+                <p class="candidate-email">@Model.Email</p>
+                <span class="candidate-role-name">Vai trò: <strong>Thí sinh</strong></span>
+                <div class="candidate-permission"><span class="check-circle" aria-hidden="true">✓</span><p>Bạn được tra cứu thông tin tuyển sinh. Quyền thay đổi ngành, chỉ tiêu và đợt tuyển sinh thuộc quản trị viên.</p></div>
+            </aside>
+        </div>
+    </section>
+    <nav class="shell candidate-journey" aria-label="Hành trình của thí sinh">
+        <a class="candidate-step is-current" href="#tra-cuu"><span class="candidate-step-number">01</span><span><strong>Tìm hiểu tuyển sinh</strong><small>Đang sử dụng · Tra cứu bên dưới</small></span><span aria-hidden="true">↗</span></a>
+        <div class="candidate-step"><span class="candidate-step-number">02</span><span><strong>Hồ sơ &amp; nguyện vọng</strong><small>Chưa triển khai</small></span></div>
+        <div class="candidate-step"><span class="candidate-step-number">03</span><span><strong>Theo dõi kết quả</strong><small>Chưa triển khai</small></span></div>
+    </nav>
+    <section class="shell candidate-catalog" id="tra-cuu" aria-labelledby="catalog-title">
+        <div class="candidate-section-title"><div><span class="eyebrow">THÔNG TIN TUYỂN SINH</span><h2 id="catalog-title">Chọn đợt. Tìm ngành bạn quan tâm.</h2></div><span class="candidate-readonly">Chỉ xem thông tin</span></div>
+        @if (Model.Rounds.Count == 0)
+        {
+            <div class="candidate-empty"><h3>Chưa có đợt tuyển sinh để tra cứu</h3><p>Bạn có thể quay lại khi nhà trường cập nhật kế hoạch tuyển sinh.</p></div>
+        }
+        else
+        {
+            <form asp-controller="Candidate" asp-action="Index" method="get" class="candidate-filter">
+                <label for="candidate-round">Đợt tuyển sinh<select id="candidate-round" name="roundId">
+                    @foreach (var round in Model.Rounds)
+                    { <option value="@round.Id" selected="@(round.Id == Model.SelectedRound?.Id)">@round.Code — @round.Name</option> }
+                </select></label>
+                <label for="candidate-search">Ngành bạn quan tâm<input id="candidate-search" name="q" value="@Model.Search" maxlength="100" placeholder="Nhập tên hoặc mã ngành" /></label>
+                <button type="submit" class="button button-primary">Tra cứu</button>
+            </form>
+            @if (Model.SelectedRound is { } selected)
+            {
+                <div class="candidate-round" aria-label="Thời gian của đợt đã chọn">
+                    <div><span class="candidate-round-status @(Model.RoundStatus == "Đang mở" ? "is-open" : "")">@Model.RoundStatus</span><strong>@selected.Name</strong><small>@selected.Code · Năm @selected.AdmissionYear</small></div>
+                    <div><span>Mở tiếp nhận</span><time datetime="@selected.StartAt.ToString("yyyy-MM-ddTHH:mm:ss+07:00")">@selected.StartAt.ToString("dd/MM/yyyy · HH:mm:ss")</time></div>
+                    <div><span>Đóng tiếp nhận</span><time datetime="@selected.EndAt.ToString("yyyy-MM-ddTHH:mm:ss+07:00")">@selected.EndAt.ToString("dd/MM/yyyy · HH:mm:ss")</time></div>
+                </div>
+                <p class="candidate-time-note">Thời gian theo giờ Việt Nam (UTC+7). Thông tin dưới đây dùng để tham khảo; chức năng nộp hồ sơ chưa triển khai.</p>
+                <div class="candidate-results-line"><strong>@Model.Majors.Count ngành trong kết quả</strong>
+                    @if (!string.IsNullOrEmpty(Model.Search)) { <a asp-controller="Candidate" asp-action="Index" asp-route-roundId="@selected.Id">Bỏ tìm kiếm <span aria-hidden="true">×</span></a> }
+                </div>
+                @if (Model.Majors.Count == 0)
+                {
+                    <div class="candidate-empty"><h3>@(string.IsNullOrEmpty(Model.Search) ? "Đợt này chưa có ngành để tra cứu" : "Chưa tìm thấy ngành phù hợp")</h3><p>@(string.IsNullOrEmpty(Model.Search) ? "Bạn hãy chọn đợt khác hoặc quay lại khi thông tin được cập nhật." : "Thử tên hoặc mã ngành khác, hoặc bỏ tìm kiếm để xem toàn bộ ngành của đợt.")</p></div>
+                }
+                else
+                {
+                    <div class="candidate-majors">
+                    @foreach (var major in Model.Majors)
+                    {
+                        <article class="candidate-major" data-major-code="@major.Code">
+                            <div class="candidate-major-top"><span class="candidate-major-code">MÃ NGÀNH @major.Code</span><div class="candidate-quota"><strong>@major.Quota</strong><span>chỉ tiêu</span></div></div>
+                            <h3>@major.Name</h3>
+                            @if (!string.IsNullOrWhiteSpace(major.Description)) { <p class="candidate-major-description">@major.Description</p> }
+                            <div class="candidate-method-names"><span>PHƯƠNG THỨC ÁP DỤNG</span>@foreach (var method in major.Methods) { <p>@method.Name</p> }</div>
+                            <details class="candidate-requirements"><summary>Xem điều kiện xét tuyển <span aria-hidden="true">+</span></summary><div>
+                                @foreach (var method in major.Methods)
+                                { <section><h4>@method.Code · @method.Name</h4><p>@(string.IsNullOrWhiteSpace(method.Requirements) ? "Điều kiện chi tiết đang được cập nhật." : method.Requirements)</p></section> }
+                            </div></details>
+                        </article>
+                    }
+                    </div>
+                }
+            }
+        }
+    </section>
+    <section class="shell candidate-next" aria-labelledby="candidate-next-title"><span class="candidate-next-icon" aria-hidden="true">02</span><div><span class="eyebrow">BƯỚC TIẾP THEO</span><h2 id="candidate-next-title">Hồ sơ và nguyện vọng sẽ được mở sau</h2><p>Hiện bạn có thể tìm hiểu thông tin tuyển sinh. Tạo hồ sơ, đăng ký nguyện vọng và xem kết quả chưa triển khai, nên chưa có thao tác nộp hồ sơ trên trang này.</p></div><span class="future-label">Chưa triển khai</span></section>
+</div>

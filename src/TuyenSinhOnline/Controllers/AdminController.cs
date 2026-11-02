@@ -1,27 +1,36 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TuyenSinhOnline.Data;
 using TuyenSinhOnline.Models;
+using TuyenSinhOnline.Models.Management;
 using TuyenSinhOnline.Security;
 
 namespace TuyenSinhOnline.Controllers;
 
 [Authorize(Roles = RoleNames.Administrator)]
 [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-public class AdminController : Controller
+public class AdminController(ApplicationDbContext db) : Controller
 {
-    public IActionResult Index() => View("~/Views/Dashboard/Workspace.cshtml", new WorkspaceViewModel
+    [HttpGet]
+    public async Task<IActionResult> Index()
     {
-        Title = "Không gian quản trị", Eyebrow = "QUẢN TRỊ HỆ THỐNG",
-        Description = "Quản lý danh mục và kế hoạch tuyển sinh: ngành học, phương thức, thời gian, chỉ tiêu và cấu hình áp dụng.",
-        RoleLabel = "Quản trị viên", UserFullName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity!.Name!,
-        Links =
-        [
-            new() { Title = "Ngành học", Description = "Thêm, sửa, tìm kiếm và ẩn ngành học.", Url = "/Majors" },
-            new() { Title = "Phương thức xét tuyển", Description = "Quản lý phương thức và điều kiện xét tuyển.", Url = "/AdmissionMethods" },
-            new() { Title = "Đợt tuyển sinh", Description = "Cấu hình thời gian mở, đóng và theo dõi trạng thái các đợt.", Url = "/AdmissionRounds" },
-            new() { Title = "Chỉ tiêu và phương thức áp dụng", Description = "Gắn ngành với đợt tuyển sinh, chỉ tiêu và các phương thức được áp dụng.", Url = "/Quotas" },
-            new() { Title = "Quản lý tài khoản", Description = "Giao diện quản lý tài khoản sẽ được bổ sung theo kế hoạch." },
-        ]
-    });
+        var now = AdmissionClock.Now;
+        return View(new AdminHome
+        {
+            FullName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity!.Name!,
+            Email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity!.Name!,
+            Majors = new(await db.Majors.CountAsync(), await db.Majors.CountAsync(x => x.IsActive)),
+            Methods = new(await db.AdmissionMethods.CountAsync(), await db.AdmissionMethods.CountAsync(x => x.IsActive)),
+            Rounds = new(await db.AdmissionRounds.CountAsync(), await db.AdmissionRounds.CountAsync(x => x.IsActive)),
+            Configurations = new(await db.RoundMajors.CountAsync(), await db.RoundMajors.CountAsync(x => x.IsEnabled)),
+            OpenRounds = await db.AdmissionRounds.CountAsync(x => x.IsActive && x.StartAt <= now && now < x.EndAt),
+            ConfigurationsToReview = await db.RoundMajors.CountAsync(x => x.IsEnabled &&
+                (!x.Major!.IsActive || !x.Round!.IsActive || !x.RoundMajorMethods.Any(link => link.IsEnabled && link.Method!.IsActive))),
+            RecentRounds = await db.AdmissionRounds.AsNoTracking().OrderByDescending(x => x.AdmissionYear)
+                .ThenByDescending(x => x.StartAt).ThenByDescending(x => x.Id).Take(8)
+                .Select(x => new AdminRound { Round = x, Configurations = x.RoundMajors.Count }).ToListAsync()
+        });
+    }
 }

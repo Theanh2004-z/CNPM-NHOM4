@@ -2,48 +2,48 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TuyenSinhOnline.Data;
 using TuyenSinhOnline.Models;
 using TuyenSinhOnline.Security;
-using TuyenSinhOnline.Data;
 
 namespace TuyenSinhOnline.Controllers;
 
 [Authorize(Roles = RoleNames.AdmissionsOfficer)]
 [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-public class AdmissionsController : Controller
+public class AdmissionsController(ApplicationDbContext db) : Controller
 {
-    private readonly ApplicationDbContext _context;
-
-    public AdmissionsController(ApplicationDbContext context)
+    [HttpGet]
+    public async Task<IActionResult> Index()
     {
-        _context = context;
+        return View(new OfficerHome
+        {
+            FullName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity!.Name!,
+            Email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity!.Name!,
+            Rounds = await db.AdmissionRounds.AsNoTracking().AsSplitQuery().Where(x => x.IsActive)
+                .OrderByDescending(x => x.AdmissionYear).ThenBy(x => x.StartAt).Select(x => new OfficerRound
+                {
+                    Round = x,
+                    Majors = x.RoundMajors.Where(config => config.IsEnabled && config.Major!.IsActive
+                            && config.RoundMajorMethods.Any(link => link.IsEnabled && link.Method!.IsActive))
+                        .OrderBy(config => config.Major!.Code).Select(config => new OfficerMajor
+                        {
+                            Code = config.Major!.Code, Name = config.Major.Name, Quota = config.Quota,
+                            Methods = config.RoundMajorMethods.Where(link => link.IsEnabled && link.Method!.IsActive)
+                                .OrderBy(link => link.Method!.Code).Select(link => link.Method!.Name).ToList()
+                        }).ToList()
+                }).ToListAsync()
+        });
     }
-
-    public IActionResult Index() => View("~/Views/Dashboard/Workspace.cshtml", new WorkspaceViewModel
-    {
-        Title = "Không gian cán bộ",
-        Eyebrow = "NGHIỆP VỤ TUYỂN SINH",
-        Description = "Bạn đã đăng nhập bằng tài khoản cán bộ tuyển sinh. Khu vực này chỉ dành cho cán bộ được cấp quyền.",
-        RoleLabel = "Cán bộ tuyển sinh",
-        UserFullName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity!.Name!,
-        Links =
-        [
-            new() { Title = "Trang thông tin chung", Description = "Xem giới thiệu hệ thống tuyển sinh.", Url = "/" },
-           new() { Title = "Kiểm tra hồ sơ", Description = "Tiếp nhận và duyệt hồ sơ sẽ được phát triển ở Sprint sau." },
-           new() { Title = "Kết quả tuyển sinh", Description = "Nhập và công bố kết quả theo kế hoạch của nhóm." }
-        ]
-    });
 
     public async Task<IActionResult> Methods()
     {
-        var data = await _context.AdmissionMethods.ToListAsync();
+        var data = await db.AdmissionMethods.ToListAsync();
         return View(data);
     }
 
-    // 2. Quản lý đợt và thời gian tuyển sinh  
     public async Task<IActionResult> Periods()
     {
-        var data = await _context.AdmissionRounds.ToListAsync();
+        var data = await db.AdmissionRounds.ToListAsync();
         return View(data);
     }
 }

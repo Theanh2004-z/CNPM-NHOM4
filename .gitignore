@@ -493,6 +493,15 @@ docs/
 
 *.docx
 
+# Note files, credentials, and local review reports
+*.txt
+*.note
+demo-password.txt
+demo-accounts.txt
+BAO-CAO-*.md
+KET-QUA-*.md
+
+
 
 # Keep the Sprint 1 handoff and verification screenshots in source control.
 !docs/

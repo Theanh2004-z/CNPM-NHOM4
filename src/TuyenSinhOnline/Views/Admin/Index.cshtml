@@ -1,0 +1,42 @@
+@using TuyenSinhOnline.Models.Management
+@model AdminHome
+@{ ViewData["Title"] = "Trung tâm quản trị"; var now = AdmissionClock.Now; }
+@section Styles { <link rel="stylesheet" href="~/css/staff-workspaces.css" asp-append-version="true" /> }
+<div class="admin-page shell">
+    <aside class="admin-sidebar" aria-label="Điều hướng quản trị">
+        <span class="staff-role-label">QUẢN TRỊ VIÊN</span><h2>Điều hành <br />tuyển sinh.</h2>
+        <nav aria-label="Chức năng quản trị"><a href="#tong-quan" class="selected">Tổng quan <span aria-hidden="true">↗</span></a><a asp-controller="Majors" asp-action="Index">Ngành học</a><a asp-controller="AdmissionMethods" asp-action="Index">Phương thức</a><a asp-controller="AdmissionRounds" asp-action="Index">Đợt tuyển sinh</a><a asp-controller="Quotas" asp-action="Index">Chỉ tiêu &amp; áp dụng</a></nav>
+        <div class="admin-sidebar-note"><strong>Quyền quản lý cấu hình</strong><p>Thêm, sửa và ngừng sử dụng danh mục, đợt tuyển sinh, chỉ tiêu và phương thức áp dụng.</p></div>
+        <div class="staff-user"><strong>@Model.FullName</strong><span>@Model.Email</span><small>Quản trị viên</small></div>
+    </aside>
+    <div class="admin-main" id="tong-quan">
+        <header class="admin-heading"><div><span class="eyebrow">TỔNG QUAN HỆ THỐNG</span><h1>Trung tâm quản trị</h1><p>Kiểm tra danh mục và hoàn thiện kế hoạch tuyển sinh tại một nơi.</p></div><a class="button button-primary" asp-controller="AdmissionRounds" asp-action="Create">Thêm đợt <span aria-hidden="true">+</span></a></header>
+        <div class="admin-metrics" aria-label="Số liệu cấu hình hiện tại">
+            <a asp-controller="Majors" asp-action="Index"><span>Ngành học</span><strong>@Model.Majors.Total</strong><small>@Model.Majors.Enabled đang sử dụng</small></a>
+            <a asp-controller="AdmissionMethods" asp-action="Index"><span>Phương thức</span><strong>@Model.Methods.Total</strong><small>@Model.Methods.Enabled đang sử dụng</small></a>
+            <a asp-controller="AdmissionRounds" asp-action="Index"><span>Đợt tuyển sinh</span><strong>@Model.Rounds.Total</strong><small>@Model.OpenRounds đang mở theo thời gian</small></a>
+            <a asp-controller="Quotas" asp-action="Index"><span>Cấu hình ngành–đợt</span><strong>@Model.Configurations.Total</strong><small>@Model.Configurations.Enabled cấu hình đang bật</small></a>
+        </div>
+        <section class="admin-panel" aria-labelledby="admin-actions-title"><div class="staff-section-heading"><div><span class="eyebrow">CÔNG VIỆC QUẢN TRỊ</span><h2 id="admin-actions-title">Quản lý kế hoạch tuyển sinh</h2></div><span class="staff-state available">Đang sử dụng</span></div>
+            <div class="admin-actions">
+                <a asp-controller="Majors" asp-action="Index"><span class="admin-action-number">01</span><div><h3>Danh mục ngành học</h3><p>Thêm, sửa, tìm kiếm và ẩn ngành.</p></div><span aria-hidden="true">→</span></a>
+                <a asp-controller="AdmissionMethods" asp-action="Index"><span class="admin-action-number">02</span><div><h3>Phương thức xét tuyển</h3><p>Quản lý mã, tên và điều kiện áp dụng.</p></div><span aria-hidden="true">→</span></a>
+                <a asp-controller="AdmissionRounds" asp-action="Index"><span class="admin-action-number">03</span><div><h3>Đợt &amp; thời gian tuyển sinh</h3><p>Thiết lập năm, thời điểm mở và đóng.</p></div><span aria-hidden="true">→</span></a>
+                <a asp-controller="Quotas" asp-action="Index"><span class="admin-action-number">04</span><div><h3>Chỉ tiêu &amp; phương thức áp dụng</h3><p>Gắn ngành vào đợt và chọn phương thức.</p></div><span aria-hidden="true">→</span></a>
+            </div>
+        </section>
+        <section class="admin-review @(Model.ConfigurationsToReview > 0 ? "needs-review" : "")" aria-label="Kiểm tra cấu hình"><span class="admin-review-symbol" aria-hidden="true">@(Model.ConfigurationsToReview > 0 ? "!" : "✓")</span><div><h2>@(Model.ConfigurationsToReview > 0 ? $"{Model.ConfigurationsToReview} cấu hình đang bật cần kiểm tra" : "Các cấu hình đang bật có đủ điều kiện hiển thị")</h2><p>Kiểm tra ngành, đợt còn sử dụng và có ít nhất một phương thức đang áp dụng. Đây là kiểm tra cấu hình, không phải kết quả xét tuyển.</p></div><a asp-controller="Quotas" asp-action="Index">Xem cấu hình <span aria-hidden="true">→</span></a></section>
+        <section class="admin-panel" aria-labelledby="admin-rounds-title"><div class="staff-section-heading"><div><span class="eyebrow">KẾ HOẠCH HIỆN CÓ</span><h2 id="admin-rounds-title">Đợt tuyển sinh gần đây</h2></div><a asp-controller="AdmissionRounds" asp-action="Index">Xem tất cả →</a></div>
+            @if (Model.RecentRounds.Count == 0)
+            { <div class="staff-empty"><h3>Chưa có đợt tuyển sinh</h3><p>Tạo đợt trước, sau đó thêm ngành, chỉ tiêu và phương thức áp dụng.</p><a class="text-link" asp-controller="AdmissionRounds" asp-action="Create">Tạo đợt đầu tiên →</a></div> }
+            else
+            {
+                <p class="table-scroll-hint">Vuốt ngang bảng để xem đầy đủ các cột.</p><div class="table-wrap"><table><caption>Tối đa 8 đợt gần đây · giờ Việt Nam (UTC+7)</caption><thead><tr><th>Đợt tuyển sinh</th><th>Thời gian</th><th>Trạng thái</th><th>Cấu hình ngành</th><th>Thao tác</th></tr></thead><tbody>
+                @foreach (var item in Model.RecentRounds)
+                { var status = AdmissionClock.Status(item.Round, now); <tr><td><strong>@item.Round.Code</strong><span class="staff-table-note">@item.Round.Name</span></td><td><span class="staff-date">@item.Round.StartAt.ToString("dd/MM/yyyy HH:mm:ss")</span><span class="staff-table-note">đến @item.Round.EndAt.ToString("dd/MM/yyyy HH:mm:ss")</span></td><td><span class="badge @(status == "Đang mở" ? "active" : "inactive")">@status</span></td><td>@item.Configurations</td><td><a asp-controller="AdmissionRounds" asp-action="Details" asp-route-id="@item.Round.Id">Cấu hình →</a></td></tr> }
+                </tbody></table></div>
+            }
+        </section>
+        <div class="staff-future-note"><strong>Quản lý tài khoản và phân công cán bộ</strong><span class="staff-state">Chưa triển khai</span><p>Chưa có giao diện cấp tài khoản, đổi vai trò hoặc phân công xử lý hồ sơ trong phiên bản hiện tại.</p></div>
+    </div>
+</div>

@@ -10,7 +10,18 @@ using TuyenSinhOnline.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews(options =>
-    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+{
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    var messages = options.ModelBindingMessageProvider;
+    messages.SetAttemptedValueIsInvalidAccessor((value, field) => $"Giá trị '{value}' không hợp lệ cho {field}.");
+    messages.SetNonPropertyAttemptedValueIsInvalidAccessor(value => $"Giá trị '{value}' không hợp lệ.");
+    messages.SetUnknownValueIsInvalidAccessor(field => $"Giá trị không hợp lệ cho {field}.");
+    messages.SetNonPropertyUnknownValueIsInvalidAccessor(() => "Giá trị không hợp lệ.");
+    messages.SetValueIsInvalidAccessor(value => $"Giá trị '{value}' không hợp lệ.");
+    messages.SetValueMustBeANumberAccessor(field => $"{field} phải là số hợp lệ.");
+    messages.SetNonPropertyValueMustBeANumberAccessor(() => "Vui lòng nhập số hợp lệ.");
+    messages.SetValueMustNotBeNullAccessor(_ => "Vui lòng nhập giá trị hợp lệ.");
+});
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Chưa cấu hình ConnectionStrings:DefaultConnection.");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));

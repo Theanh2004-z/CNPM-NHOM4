@@ -1,0 +1,31 @@
+@using TuyenSinhOnline.Models.Management
+@model OfficerHome
+@{ ViewData["Title"] = "Bàn làm việc cán bộ"; var now = AdmissionClock.Now; }
+@section Styles { <link rel="stylesheet" href="~/css/staff-workspaces.css" asp-append-version="true" /> }
+<div class="officer-page">
+    <section class="officer-banner"><div class="shell officer-banner-inner"><div><span class="staff-role-label">CÁN BỘ TUYỂN SINH</span><p class="officer-greeting">Xin chào, @Model.FullName</p><h1>Bàn làm việc<br /><span>tuyển sinh.</span></h1><p class="officer-intro">Theo dõi lịch và kế hoạch từng đợt để chuẩn bị cho công tác tiếp nhận hồ sơ.</p><a href="#lich-tuyen-sinh" class="button button-primary">Xem lịch tuyển sinh <span aria-hidden="true">↓</span></a></div><div class="officer-scope"><span class="eyebrow">PHẠM VI CÔNG VIỆC HIỆN TẠI</span><h2>Tra cứu kế hoạch tuyển sinh</h2><p>Xem thời gian, ngành học, chỉ tiêu và phương thức theo đợt đang sử dụng.</p><div><span class="staff-state available">Đang sử dụng</span><span>Chế độ chỉ xem</span></div><hr /><p>Tiếp nhận hồ sơ, xét duyệt và xử lý kết quả chưa triển khai. Bạn chưa có quyền sửa các cấu hình tuyển sinh.</p></div></div></section>
+    <div class="shell officer-body"><section id="lich-tuyen-sinh" aria-labelledby="officer-schedule-title"><div class="staff-section-heading"><div><span class="eyebrow">LỊCH &amp; KẾ HOẠCH</span><h2 id="officer-schedule-title">Theo dõi từng đợt tuyển sinh</h2></div></div><p class="officer-time-note">Giờ Việt Nam (UTC+7). Chỉ hiển thị các đợt đang sử dụng.</p>
+        @if (Model.Rounds.Count == 0)
+        { <div class="staff-empty"><h3>Chưa có đợt tuyển sinh để theo dõi</h3><p>Kế hoạch sẽ xuất hiện tại đây khi quản trị viên thiết lập đợt tuyển sinh.</p></div> }
+        else
+        {
+            <div class="officer-timeline">
+            @foreach (var item in Model.Rounds)
+            {
+                var status = AdmissionClock.Status(item.Round, now);
+                <article class="officer-round" data-round-code="@item.Round.Code"><div class="officer-round-heading"><span class="officer-round-code">@item.Round.Code · @item.Round.AdmissionYear</span><span class="badge @(status == "Đang mở" ? "active" : "inactive")">@status</span></div><h3>@item.Round.Name</h3><div class="officer-round-dates"><div><span>Mở tiếp nhận</span><strong>@item.Round.StartAt.ToString("dd/MM/yyyy · HH:mm:ss")</strong></div><span aria-hidden="true">→</span><div><span>Đóng tiếp nhận</span><strong>@item.Round.EndAt.ToString("dd/MM/yyyy · HH:mm:ss")</strong></div></div>
+                    <details class="officer-plan" open="@(item == Model.Rounds[0])"><summary><span>Ngành &amp; phương thức áp dụng</span><span>@item.Majors.Count ngành <span aria-hidden="true">⌄</span></span></summary>
+                        @if (item.Majors.Count == 0)
+                        { <p class="officer-plan-empty">Chưa có ngành đủ cấu hình để hiển thị trong đợt này.</p> }
+                        else
+                        {
+                            <div class="officer-major-list">@foreach (var major in item.Majors)
+                            { <div class="officer-major" data-major-code="@major.Code"><div><span>@major.Code</span><h4>@major.Name</h4><p>@string.Join(" · ", major.Methods)</p></div><div class="officer-quota"><strong>@major.Quota</strong><span>chỉ tiêu</span></div></div> }</div>
+                        }
+                    </details>
+                </article>
+            }
+            </div>
+        }
+    </section><aside class="officer-aside"><section class="officer-account"><span class="officer-monogram" aria-hidden="true">CB</span><span class="eyebrow">TÀI KHOẢN LÀM VIỆC</span><h2>@Model.FullName</h2><p>@Model.Email</p><span class="officer-role-name">Cán bộ tuyển sinh</span><hr /><p>Tài khoản được cấp để làm việc trong khu vực cán bộ. Cấu hình ngành, đợt và chỉ tiêu do quản trị viên quản lý.</p></section><section class="officer-upcoming" aria-labelledby="officer-upcoming-title"><span class="eyebrow">NGHIỆP VỤ TIẾP THEO</span><h2 id="officer-upcoming-title">Khi hệ thống mở tiếp nhận</h2><ol><li><strong>Tiếp nhận &amp; kiểm tra hồ sơ</strong><span>Chưa triển khai</span></li><li><strong>Xét duyệt &amp; phản hồi</strong><span>Chưa triển khai</span></li><li><strong>Xử lý kết quả tuyển sinh</strong><span>Chưa triển khai</span></li></ol><p>Chưa có hồ sơ được giao hoặc kết quả xử lý để hiển thị trong phiên bản này.</p></section></aside></div>
+</div>

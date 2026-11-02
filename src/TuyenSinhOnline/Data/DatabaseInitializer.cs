@@ -18,6 +18,8 @@ public static class DatabaseInitializer
             if (!await roleManager.RoleExistsAsync(role))
                 EnsureSuccess(await roleManager.CreateAsync(new IdentityRole(role)));
         }
+        if (environment.IsDevelopment() && configuration.GetValue<bool>("DemoData:Enabled"))
+            await Sprint1DemoData.SeedAsync(db);
         if (!environment.IsDevelopment() || !configuration.GetValue<bool>("DemoAccounts:Enabled")) return;
         var password = configuration["DemoAccounts:Password"];
         if (string.IsNullOrWhiteSpace(password))

@@ -3,6 +3,8 @@
     var signedIn = User.Identity?.IsAuthenticated == true;
     var fullName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity?.Name ?? "Tài khoản";
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var workspaceLabel = User.IsInRole(TuyenSinhOnline.Security.RoleNames.Administrator) ? "Không gian quản trị"
+        : User.IsInRole(TuyenSinhOnline.Security.RoleNames.AdmissionsOfficer) ? "Không gian cán bộ" : "Cổng thí sinh";
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -13,6 +15,7 @@
     <meta name="description" content="Cổng tuyển sinh trực tuyến. Đăng ký tài khoản và truy cập không gian làm việc theo vai trò." />
     <title>@ViewData["Title"] | Tuyển sinh trực tuyến</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <a class="skip-link" href="#main-content">Đến nội dung chính</a>
@@ -28,7 +31,7 @@
                     <a class="nav-link @(currentController == "Home" ? "is-active" : "")" asp-controller="Home" asp-action="Index">Trang chủ</a>
                     @if (signedIn)
                     {
-                        <a class="nav-link @(currentController != "Home" && currentController != "Account" ? "is-active" : "")" asp-controller="Dashboard" asp-action="Index">Không gian của tôi</a>
+                        <a class="nav-link @(currentController != "Home" && currentController != "Account" ? "is-active" : "")" asp-controller="Dashboard" asp-action="Index">@workspaceLabel</a>
                         @if (User.IsInRole(TuyenSinhOnline.Security.RoleNames.Administrator))
                         { <a class="nav-link" asp-controller="AdmissionRounds" asp-action="Index">Quản lý tuyển sinh</a> }
                     }

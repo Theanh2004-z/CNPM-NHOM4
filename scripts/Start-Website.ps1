@@ -32,6 +32,7 @@ if (-not $NoDemo) {
         Set-Content -LiteralPath $passwordPath -Value $demoPassword -Encoding ascii -NoNewline
     }
     $env:DemoAccounts__Enabled = 'true'
+    $env:DemoData__Enabled = 'true'
     $env:DemoAccounts__Password = (Get-Content -LiteralPath $passwordPath -Raw).Trim()
     @(
         'Tai khoan demo chi dung tren may phat trien:',
@@ -44,6 +45,7 @@ if (-not $NoDemo) {
     Write-Host ('Tai khoan va mat khau demo: ' + $accountPath)
 } else {
     $env:DemoAccounts__Enabled = 'false'
+    $env:DemoData__Enabled = 'false'
     Remove-Item Env:DemoAccounts__Password -ErrorAction SilentlyContinue
 }
 
@@ -62,4 +64,5 @@ try {
 } finally {
     Remove-Item Env:DemoAccounts__Password -ErrorAction SilentlyContinue
     Remove-Item Env:DemoAccounts__Enabled -ErrorAction SilentlyContinue
+    Remove-Item Env:DemoData__Enabled -ErrorAction SilentlyContinue
 }

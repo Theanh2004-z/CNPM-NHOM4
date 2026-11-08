@@ -1,5 +1,5 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model List<RoundMajor>
 @{ ViewData["Title"] = "Chỉ tiêu và phương thức áp dụng"; var selectedRound = ViewData["RoundId"]?.ToString(); }
-<section class="shell management-page"><partial name="_ManagementNav" /><header class="management-heading"><div><span class="eyebrow">CẤU HÌNH THEO ĐỢT</span><h1>Chỉ tiêu &amp; phương thức</h1><p>Mỗi ngành có một cấu hình chỉ tiêu riêng trong mỗi đợt tuyển sinh.</p></div><a class="button button-primary" asp-action="Create">Thêm cấu hình</a></header>
+<section class="management-page"><header class="management-heading"><div><span class="eyebrow">CẤU HÌNH THEO ĐỢT</span><h1>Chỉ tiêu &amp; phương thức</h1><p>Mỗi ngành có một cấu hình chỉ tiêu riêng trong mỗi đợt tuyển sinh.</p></div><a class="button button-primary" asp-action="Create">Thêm cấu hình</a></header>
 <form class="filter-bar" method="get"><label>Đợt tuyển sinh<select name="roundId"><option value="">Tất cả các đợt</option>@foreach (SelectListItem round in ViewBag.Rounds) { <option value="@round.Value" selected="@(round.Value == selectedRound)">@round.Text</option> }</select></label><button class="button button-outline">Xem chỉ tiêu</button><a asp-action="Index">Bỏ lọc</a></form><partial name="_ConfigurationTable" model="Model" /></section>

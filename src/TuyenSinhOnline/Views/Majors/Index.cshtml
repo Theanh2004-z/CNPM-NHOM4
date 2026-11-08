@@ -1,7 +1,6 @@
 @model List<Major>
 @{ ViewData["Title"] = "Quản lý ngành học"; }
-<section class="shell management-page">
-    <partial name="_ManagementNav" />
+<section class="management-page">
     <header class="management-heading"><div><span class="eyebrow">DANH MỤC TUYỂN SINH</span><h1>Ngành học</h1><p>Quản lý thông tin ngành. Ngành đã ẩn vẫn giữ các dữ liệu liên kết.</p></div><a class="button button-primary" asp-action="Create">Thêm ngành</a></header>
     <form class="filter-bar" method="get"><label>Tìm mã hoặc tên ngành<input name="q" value="@ViewData["Query"]" maxlength="200" placeholder="Nhập mã hoặc tên ngành" /></label><label>Trạng thái<select name="status"><option value="">Tất cả</option><option value="active" selected="@(ViewData["Status"] as string == "active")">Đang sử dụng</option><option value="inactive" selected="@(ViewData["Status"] as string == "inactive")">Đã ẩn</option></select></label><button class="button button-outline">Tìm kiếm</button><a asp-action="Index">Bỏ lọc</a></form>
     <p class="table-scroll-hint">Vuốt ngang bảng để xem đầy đủ các cột.</p><div class="table-wrap"><table><caption>@Model.Count ngành trong kết quả</caption><thead><tr><th>Mã ngành</th><th>Tên ngành</th><th>Mô tả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>

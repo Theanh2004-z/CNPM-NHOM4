@@ -13,6 +13,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<RoundMajor> RoundMajors => Set<RoundMajor>();
     public DbSet<RoundMajorMethod> RoundMajorMethods => Set<RoundMajorMethod>();
     public DbSet<ApplicationStatus> ApplicationStatuses => Set<ApplicationStatus>();
+    public DbSet<CandidateProfile> CandidateProfiles => Set<CandidateProfile>();
+    public DbSet<CandidateEducation> CandidateEducations => Set<CandidateEducation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -24,6 +26,22 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasDatabaseName("EmailIndex")
             .IsUnique()
             .HasFilter("[NormalizedEmail] IS NOT NULL");
+
+        builder.Entity<CandidateProfile>(entity =>
+        {
+            entity.Property(x => x.FullName).HasMaxLength(100);
+            entity.Property(x => x.DateOfBirth).HasColumnType("date");
+            entity.Property(x => x.PhoneNumber).IsUnicode(false).HasMaxLength(10);
+            entity.Property(x => x.ContactEmail).HasMaxLength(256);
+            entity.HasOne<ApplicationUser>().WithOne()
+                .HasForeignKey<CandidateProfile>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Education).WithOne()
+                .HasForeignKey<CandidateEducation>(x => x.CandidateProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        builder.Entity<CandidateEducation>()
+            .Property(x => x.SchoolName).HasMaxLength(200);
 
         builder.Entity<Major>(entity =>
         {

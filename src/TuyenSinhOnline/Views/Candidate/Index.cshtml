@@ -17,14 +17,14 @@
                 <h2 id="candidate-account-title">@Model.FullName</h2>
                 <p class="candidate-email">@Model.Email</p>
                 <span class="candidate-role-name">Vai trò: <strong>Thí sinh</strong></span>
-                <div class="candidate-permission"><span class="check-circle" aria-hidden="true">✓</span><p>Bạn được tra cứu thông tin tuyển sinh. Quyền thay đổi ngành, chỉ tiêu và đợt tuyển sinh thuộc quản trị viên.</p></div>
+                <div class="candidate-permission"><span class="check-circle" aria-hidden="true">✓</span><p>Bạn có thể tra cứu tuyển sinh và cập nhật hồ sơ cá nhân của mình.</p></div>
             </aside>
         </div>
     </section>
     <nav class="shell candidate-journey" aria-label="Hành trình của thí sinh">
         <a class="candidate-step is-current" href="#tra-cuu"><span class="candidate-step-number">01</span><span><strong>Tìm hiểu tuyển sinh</strong><small>Đang sử dụng · Tra cứu bên dưới</small></span><span aria-hidden="true">↗</span></a>
-        <div class="candidate-step"><span class="candidate-step-number">02</span><span><strong>Hồ sơ &amp; nguyện vọng</strong><small>Chưa triển khai</small></span></div>
-        <div class="candidate-step"><span class="candidate-step-number">03</span><span><strong>Theo dõi kết quả</strong><small>Chưa triển khai</small></span></div>
+        <a class="candidate-step is-current" asp-controller="CandidateProfile" asp-action="Index"><span class="candidate-step-number">02</span><span><strong>Hồ sơ cá nhân</strong><small>Đang sử dụng · Xem và cập nhật</small></span><span aria-hidden="true">↗</span></a>
+        <div class="candidate-step"><span class="candidate-step-number">03</span><span><strong>Đăng ký xét tuyển</strong><small>Chưa triển khai</small></span></div>
     </nav>
     <section class="shell candidate-catalog" id="tra-cuu" aria-labelledby="catalog-title">
         <div class="candidate-section-title"><div><span class="eyebrow">THÔNG TIN TUYỂN SINH</span><h2 id="catalog-title">Chọn đợt. Tìm ngành bạn quan tâm.</h2></div><span class="candidate-readonly">Chỉ xem thông tin</span></div>
@@ -78,5 +78,5 @@
             }
         }
     </section>
-    <section class="shell candidate-next" aria-labelledby="candidate-next-title"><span class="candidate-next-icon" aria-hidden="true">02</span><div><span class="eyebrow">BƯỚC TIẾP THEO</span><h2 id="candidate-next-title">Hồ sơ và nguyện vọng sẽ được mở sau</h2><p>Hiện bạn có thể tìm hiểu thông tin tuyển sinh. Tạo hồ sơ, đăng ký nguyện vọng và xem kết quả chưa triển khai, nên chưa có thao tác nộp hồ sơ trên trang này.</p></div><span class="future-label">Chưa triển khai</span></section>
+    <section class="shell candidate-next" aria-labelledby="candidate-next-title"><span class="candidate-next-icon" aria-hidden="true">03</span><div><span class="eyebrow">BƯỚC TIẾP THEO</span><h2 id="candidate-next-title">Đăng ký xét tuyển sẽ được mở sau</h2><p>Bạn có thể lưu hồ sơ cá nhân để chuẩn bị đăng ký xét tuyển khi chức năng được mở.</p></div><span class="future-label">Chưa triển khai</span></section>
 </div>

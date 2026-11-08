@@ -1,3 +1,6 @@
 ﻿@{
-    Layout = "_Layout";
+    Layout = ViewContext.RouteData.Values["controller"]?.ToString()?.ToUpperInvariant() is
+        "ADMIN" or "MAJORS" or "ADMISSIONMETHODS" or "ADMISSIONROUNDS" or "QUOTAS"
+        ? "_AdminLayout"
+        : "_Layout";
 }

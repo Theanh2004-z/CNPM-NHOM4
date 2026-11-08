@@ -1,0 +1,75 @@
+@model CandidateProfileForm
+@using TuyenSinhOnline.Models.Management
+@{
+    var isNew = ViewData["IsNew"] is true;
+    ViewData["Title"] = isNew ? "Tạo hồ sơ cá nhân" : "Cập nhật hồ sơ cá nhân";
+    var maxBirthDate = AdmissionClock.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+}
+@section Styles { <link rel="stylesheet" href="~/css/candidate.css" asp-append-version="true" /> }
+
+<section class="shell candidate-profile" aria-labelledby="profile-title">
+    <a class="text-link" asp-controller="Candidate" asp-action="Index"><span aria-hidden="true">←</span> Về Cổng thí sinh</a>
+    <header class="profile-heading">
+        <div>
+            <span class="eyebrow">KHÔNG GIAN THÍ SINH</span>
+            <h1 id="profile-title">@(isNew ? "Hồ sơ cá nhân" : "Cập nhật hồ sơ")</h1>
+            <p>Điền thông tin cá nhân và học tập. Các ô có dấu * là bắt buộc.</p>
+        </div>
+        @if (isNew) { <span class="profile-status">Chưa tạo hồ sơ</span> }
+    </header>
+    <form asp-action="Edit" method="post" novalidate>
+        <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+        <div class="profile-panels">
+            <fieldset class="profile-panel">
+                <legend>Thông tin cá nhân</legend>
+                <div class="form-field">
+                    <label asp-for="FullName">Họ và tên <span aria-hidden="true">*</span></label>
+                    <input asp-for="FullName" autocomplete="name" maxlength="100" required aria-describedby="FullName-error" />
+                    <span asp-validation-for="FullName" id="FullName-error" class="field-error"></span>
+                </div>
+                <div class="form-field">
+                    <label asp-for="DateOfBirth">Ngày sinh <span aria-hidden="true">*</span></label>
+                    <input asp-for="DateOfBirth" type="date" autocomplete="bday" max="@maxBirthDate" required aria-describedby="DateOfBirth-error" />
+                    <span asp-validation-for="DateOfBirth" id="DateOfBirth-error" class="field-error"></span>
+                </div>
+                <div class="form-field">
+                    <label asp-for="PhoneNumber">Số điện thoại <span aria-hidden="true">*</span></label>
+                    <input asp-for="PhoneNumber" type="tel" autocomplete="tel" maxlength="32" required aria-describedby="phone-hint PhoneNumber-error" />
+                    <p id="phone-hint" class="field-hint">Nhập số bắt đầu bằng 0 hoặc +84.</p>
+                    <span asp-validation-for="PhoneNumber" id="PhoneNumber-error" class="field-error"></span>
+                </div>
+                <div class="form-field">
+                    <label asp-for="ContactEmail">Email liên hệ <span aria-hidden="true">*</span></label>
+                    <input asp-for="ContactEmail" type="email" autocomplete="email" maxlength="256" required aria-describedby="email-hint ContactEmail-error" />
+                    <p id="email-hint" class="field-hint">Đây là email dùng trong hồ sơ. Bạn vẫn đăng nhập bằng email tài khoản.</p>
+                    <span asp-validation-for="ContactEmail" id="ContactEmail-error" class="field-error"></span>
+                </div>
+            </fieldset>
+            <fieldset class="profile-panel">
+                <legend>Thông tin học tập</legend>
+                <div class="form-field">
+                    <label asp-for="SchoolName">Trường THPT <span aria-hidden="true">*</span></label>
+                    <input asp-for="SchoolName" maxlength="200" required aria-describedby="SchoolName-error" />
+                    <span asp-validation-for="SchoolName" id="SchoolName-error" class="field-error"></span>
+                </div>
+                <div class="form-field">
+                    <label asp-for="GraduationYear">Năm tốt nghiệp hoặc dự kiến <span aria-hidden="true">*</span></label>
+                    <input asp-for="GraduationYear" inputmode="numeric" maxlength="4" required aria-describedby="year-hint GraduationYear-error" />
+                    <p id="year-hint" class="field-hint">Nếu đang học lớp 12, nhập năm dự kiến tốt nghiệp.</p>
+                    <span asp-validation-for="GraduationYear" id="GraduationYear-error" class="field-error"></span>
+                </div>
+            </fieldset>
+        </div>
+        <div class="profile-actions">
+            <button type="submit" class="button button-primary">Lưu hồ sơ</button>
+            @if (isNew)
+            {
+                <a class="button button-outline" asp-controller="Candidate" asp-action="Index">Về Cổng thí sinh</a>
+            }
+            else
+            {
+                <a class="button button-outline" asp-action="Index">Hủy</a>
+            }
+        </div>
+    </form>
+</section>

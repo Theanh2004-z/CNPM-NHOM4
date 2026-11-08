@@ -323,6 +323,81 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("TuyenSinhOnline.Models.CandidateEducation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AcademicInfoJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CandidateProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GraduationYear")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SchoolName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CandidateProfileId")
+                        .IsUnique();
+
+                    b.ToTable("CandidateEducations");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.CandidateProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("CandidateProfiles");
+                });
+
             modelBuilder.Entity("TuyenSinhOnline.Models.Major", b =>
                 {
                     b.Property<int>("Id")
@@ -467,6 +542,24 @@ namespace TuyenSinhOnline.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TuyenSinhOnline.Models.CandidateEducation", b =>
+                {
+                    b.HasOne("TuyenSinhOnline.Models.CandidateProfile", null)
+                        .WithOne("Education")
+                        .HasForeignKey("TuyenSinhOnline.Models.CandidateEducation", "CandidateProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.CandidateProfile", b =>
+                {
+                    b.HasOne("TuyenSinhOnline.Models.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("TuyenSinhOnline.Models.CandidateProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TuyenSinhOnline.Models.RoundMajor", b =>
                 {
                     b.HasOne("TuyenSinhOnline.Models.Major", "Major")
@@ -513,6 +606,11 @@ namespace TuyenSinhOnline.Data.Migrations
             modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionRound", b =>
                 {
                     b.Navigation("RoundMajors");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.CandidateProfile", b =>
+                {
+                    b.Navigation("Education");
                 });
 
             modelBuilder.Entity("TuyenSinhOnline.Models.Major", b =>

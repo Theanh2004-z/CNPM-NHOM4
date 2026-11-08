@@ -1,0 +1,44 @@
+@model CandidateProfile
+@{ ViewData["Title"] = "Hồ sơ cá nhân"; }
+@section Styles { <link rel="stylesheet" href="~/css/candidate.css" asp-append-version="true" /> }
+
+<section class="shell candidate-profile" aria-labelledby="profile-title">
+    <a class="text-link" asp-controller="Candidate" asp-action="Index"><span aria-hidden="true">←</span> Về Cổng thí sinh</a>
+    <header class="profile-heading">
+        <div>
+            <span class="eyebrow">KHÔNG GIAN THÍ SINH</span>
+            <h1 id="profile-title">Hồ sơ cá nhân</h1>
+            <p>Thông tin bạn dùng để chuẩn bị đăng ký xét tuyển.</p>
+        </div>
+        <a class="button button-primary" asp-action="Edit">Cập nhật hồ sơ</a>
+    </header>
+    @if (TempData["ProfileSaved"] is string message)
+    {
+        <p class="notice success" role="status">@message</p>
+    }
+    <div class="profile-panels">
+        <section class="profile-panel" aria-labelledby="personal-title">
+            <h2 id="personal-title">Thông tin cá nhân</h2>
+            <dl class="profile-details">
+                <dt>Họ và tên</dt><dd>@Model.FullName</dd>
+                <dt>Ngày sinh</dt><dd><time datetime="@Model.DateOfBirth.ToString("yyyy-MM-dd")">@Model.DateOfBirth.ToString("dd/MM/yyyy")</time></dd>
+                <dt>Số điện thoại</dt><dd>@Model.PhoneNumber</dd>
+                <dt>Email liên hệ</dt><dd>@Model.ContactEmail</dd>
+            </dl>
+        </section>
+        <section class="profile-panel" aria-labelledby="education-title">
+            <h2 id="education-title">Thông tin học tập</h2>
+            @if (Model.Education is { } education)
+            {
+                <dl class="profile-details">
+                    <dt>Trường THPT</dt><dd>@education.SchoolName</dd>
+                    <dt>Năm tốt nghiệp hoặc dự kiến</dt><dd>@education.GraduationYear.ToString("0000")</dd>
+                </dl>
+            }
+            else
+            {
+                <p class="profile-hint">Chưa cập nhật thông tin học tập.</p>
+            }
+        </section>
+    </div>
+</section>

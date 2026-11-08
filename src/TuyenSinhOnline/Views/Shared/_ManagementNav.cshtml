@@ -1,9 +1,22 @@
-@{ var controller = ViewContext.RouteData.Values["controller"]?.ToString(); }
-<nav class="management-tabs" aria-label="Quản lý tuyển sinh">
-    <a asp-controller="Admin" asp-action="Index">Tổng quan</a>
-    <a class="@(controller == "Majors" ? "selected" : "")" asp-controller="Majors" asp-action="Index">Ngành học</a>
-    <a class="@(controller == "AdmissionMethods" ? "selected" : "")" asp-controller="AdmissionMethods" asp-action="Index">Phương thức</a>
-    <a class="@(controller == "AdmissionRounds" ? "selected" : "")" asp-controller="AdmissionRounds" asp-action="Index">Đợt tuyển sinh</a>
-    <a class="@(controller == "Quotas" ? "selected" : "")" asp-controller="Quotas" asp-action="Index">Chỉ tiêu &amp; áp dụng</a>
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    (string Controller, string Label)[] items =
+    [
+        ("Admin", "Tổng quan"),
+        ("Majors", "Ngành học"),
+        ("AdmissionMethods", "Phương thức"),
+        ("AdmissionRounds", "Đợt tuyển sinh"),
+        ("Quotas", "Chỉ tiêu & áp dụng")
+    ];
+}
+<nav aria-label="Chức năng quản trị">
+    @foreach (var item in items)
+    {
+        var selected = string.Equals(currentController, item.Controller, StringComparison.OrdinalIgnoreCase);
+        <a asp-controller="@item.Controller" asp-action="Index"
+           class="@(selected ? "selected" : null)" aria-current="@(selected ? "page" : null)">
+            @item.Label
+            @if (selected) { <span aria-hidden="true">↗</span> }
+        </a>
+    }
 </nav>
-@if (TempData["ManagementSuccess"] is string success) { <div class="notice success" role="status">@success</div> }

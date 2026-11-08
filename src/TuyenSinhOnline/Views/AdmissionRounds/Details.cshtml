@@ -1,7 +1,7 @@
 @using TuyenSinhOnline.Models.Management
 @model RoundDetails
 @{ ViewData["Title"] = "Cấu hình " + Model.Round.Code; }
-<section class="shell management-page"><partial name="_ManagementNav" /><header class="management-heading"><div><span class="eyebrow">@Model.Round.Code · @Model.Round.AdmissionYear</span><h1>@Model.Round.Name</h1><p>@Model.Round.StartAt.ToString("dd/MM/yyyy HH:mm:ss") → @Model.Round.EndAt.ToString("dd/MM/yyyy HH:mm:ss") (UTC+7)</p><span class="badge">@AdmissionClock.Status(Model.Round)</span></div><a class="button button-outline" asp-action="Edit" asp-route-id="@Model.Round.Id">Sửa thời gian</a></header>
+<section class="management-page"><header class="management-heading"><div><span class="eyebrow">@Model.Round.Code · @Model.Round.AdmissionYear</span><h1>@Model.Round.Name</h1><p>@Model.Round.StartAt.ToString("dd/MM/yyyy HH:mm:ss") → @Model.Round.EndAt.ToString("dd/MM/yyyy HH:mm:ss") (UTC+7)</p><span class="badge">@AdmissionClock.Status(Model.Round)</span></div><a class="button button-outline" asp-action="Edit" asp-route-id="@Model.Round.Id">Sửa thời gian</a></header>
 <div class="section-heading"><h2>Ngành và phương thức áp dụng</h2><a class="button button-primary" asp-controller="Quotas" asp-action="Create" asp-route-roundId="@Model.Round.Id">Thêm ngành vào đợt</a></div>
 <partial name="~/Views/Quotas/_ConfigurationTable.cshtml" model="Model.Configurations" />
 <p class="management-help">Chọn “Sửa cấu hình” để cập nhật chỉ tiêu và các phương thức xét tuyển cho từng ngành trong đợt.</p></section>

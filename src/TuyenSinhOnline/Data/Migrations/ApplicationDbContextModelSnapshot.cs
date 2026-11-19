@@ -155,6 +155,74 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("GraduationYear")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<int>("RoundMajorMethodId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SchoolName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte>("StatusId")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationCode")
+                        .IsUnique();
+
+                    b.HasIndex("RoundMajorMethodId");
+
+                    b.HasIndex("StatusId");
+
+                    b.HasIndex("UserId", "RoundMajorMethodId")
+                        .IsUnique();
+
+                    b.ToTable("AdmissionApplications");
+                });
+
             modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionMethod", b =>
                 {
                     b.Property<int>("Id")
@@ -226,6 +294,39 @@ namespace TuyenSinhOnline.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("AdmissionRounds");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationScore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FieldKey")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("FieldLabel")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId", "FieldKey")
+                        .IsUnique();
+
+                    b.ToTable("ApplicationScores");
                 });
 
             modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationStatus", b =>
@@ -542,6 +643,42 @@ namespace TuyenSinhOnline.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionApplication", b =>
+                {
+                    b.HasOne("TuyenSinhOnline.Models.RoundMajorMethod", "RoundMajorMethod")
+                        .WithMany()
+                        .HasForeignKey("RoundMajorMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TuyenSinhOnline.Models.ApplicationStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TuyenSinhOnline.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RoundMajorMethod");
+
+                    b.Navigation("Status");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationScore", b =>
+                {
+                    b.HasOne("TuyenSinhOnline.Models.AdmissionApplication", "Application")
+                        .WithMany("Scores")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+                });
+
             modelBuilder.Entity("TuyenSinhOnline.Models.CandidateEducation", b =>
                 {
                     b.HasOne("TuyenSinhOnline.Models.CandidateProfile", null)
@@ -596,6 +733,11 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.Navigation("Method");
 
                     b.Navigation("RoundMajor");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionApplication", b =>
+                {
+                    b.Navigation("Scores");
                 });
 
             modelBuilder.Entity("TuyenSinhOnline.Models.AdmissionMethod", b =>

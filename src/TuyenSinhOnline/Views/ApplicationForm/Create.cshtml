@@ -1,0 +1,217 @@
+﻿@model ApplicationFormPage
+@{
+    ViewData["Title"] = "Nộp hồ sơ xét tuyển";
+    var input = Model.Input;
+    // Lấy thông báo lỗi (nếu có) của một ô theo tên
+    string? Err(string key) =>
+        ViewData.ModelState.TryGetValue(key, out var entry) ? entry.Errors.FirstOrDefault()?.ErrorMessage : null;
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/candidate.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/application-form.css" asp-append-version="true" />
+}
+
+<section class="shell candidate-profile app-form" aria-labelledby="form-title">
+    <a class="text-link" asp-controller="Candidate" asp-action="Index"><span aria-hidden="true">←</span> Về Cổng thí sinh</a>
+    <header class="profile-heading">
+        <div>
+            <span class="eyebrow">KHÔNG GIAN THÍ SINH</span>
+            <h1 id="form-title">Nộp hồ sơ xét tuyển</h1>
+            <p>Kiểm tra thông tin cá nhân, chọn ngành và phương thức, rồi nhập điểm. Các ô có dấu * là bắt buộc.</p>
+        </div>
+    </header>
+
+    @if (TempData["FormOk"] is string ok)
+    {
+        <p class="notice success" role="status">@ok</p>
+    }
+
+    @if (Model.Profile is null)
+    {
+        <div class="app-empty" role="alert">
+            <h2>Bạn chưa tạo hồ sơ cá nhân</h2>
+            <p>Cần có hồ sơ cá nhân trước khi nộp hồ sơ xét tuyển.</p>
+            <a class="button button-primary" asp-controller="CandidateProfile" asp-action="Edit">Tạo hồ sơ cá nhân</a>
+        </div>
+    }
+    else if (Model.Round is null)
+    {
+        <div class="app-empty" role="status">
+            <h2>Hiện chưa có đợt xét tuyển nào đang mở</h2>
+            <p>Bạn hãy quay lại khi nhà trường mở đợt tiếp nhận hồ sơ.</p>
+            <a class="button button-outline" asp-controller="Candidate" asp-action="Index">Xem kế hoạch tuyển sinh</a>
+        </div>
+    }
+    else if (Model.Majors.Count == 0)
+    {
+        <div class="app-empty" role="status">
+            <h2>Đợt này chưa có ngành nào mở đăng ký</h2>
+            <p>Đợt <strong>@Model.Round.Name</strong> chưa được cấu hình ngành và phương thức xét tuyển.</p>
+        </div>
+    }
+    else
+    {
+        var profile = Model.Profile;
+        <form asp-action="Create" method="post" id="application-form" novalidate>
+            <div class="profile-panels">
+                <section class="profile-panel" aria-labelledby="personal-title">
+                    <h2 id="personal-title">Thông tin cá nhân</h2>
+                    <dl class="profile-details">
+                        <dt>Họ và tên</dt>
+                        <dd>@profile.FullName</dd>
+                        <dt>Ngày sinh</dt>
+                        <dd>@profile.DateOfBirth.ToString("dd/MM/yyyy")</dd>
+                        <dt>Số điện thoại</dt>
+                        <dd>@profile.PhoneNumber</dd>
+                        <dt>Email liên hệ</dt>
+                        <dd>@profile.ContactEmail</dd>
+                        @if (profile.Education is { } edu)
+                        {
+                            <dt>Trường THPT</dt>
+                            <dd>@edu.SchoolName (tốt nghiệp @edu.GraduationYear)</dd>
+                        }
+                    </dl>
+                    <p class="field-hint">Cần sửa thông tin? <a asp-controller="CandidateProfile" asp-action="Edit">Cập nhật hồ sơ cá nhân</a></p>
+                </section>
+
+                <section class="profile-panel" aria-labelledby="round-title">
+                    <h2 id="round-title">Đợt xét tuyển đang mở</h2>
+                    <dl class="profile-details">
+                        <dt>Tên đợt</dt>
+                        <dd>@Model.Round.Name</dd>
+                        <dt>Mã đợt · Năm</dt>
+                        <dd>@Model.Round.Code · @Model.Round.AdmissionYear</dd>
+                        <dt>Hạn nộp hồ sơ</dt>
+                        <dd>@Model.Round.EndAt.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</dd>
+                    </dl>
+                </section>
+            </div>
+
+            <fieldset class="profile-panel" style="margin-top:20px">
+                <legend>Nguyện vọng xét tuyển</legend>
+
+                <div class="form-field">
+                    <label for="RoundMajorId">Ngành <span aria-hidden="true">*</span></label>
+                    <select id="RoundMajorId" name="RoundMajorId">
+                        <option value="">-- Chọn ngành --</option>
+                        @foreach (var major in Model.Majors)
+                        {
+                            <option value="@major.RoundMajorId" selected="@(input.RoundMajorId == major.RoundMajorId)">@major.Code — @major.Name</option>
+                        }
+                    </select>
+                    <span class="field-error" data-error-for="RoundMajorId">@Err("RoundMajorId")</span>
+                </div>
+
+                <div class="form-field">
+                    <label for="RoundMajorMethodId">Phương thức xét tuyển <span aria-hidden="true">*</span></label>
+                    <select id="RoundMajorMethodId" name="RoundMajorMethodId">
+                        <option value="">-- Chọn phương thức --</option>
+                        @foreach (var major in Model.Majors)
+                        {
+                            foreach (var method in major.Methods)
+                            {
+                                <option value="@method.RoundMajorMethodId" data-major="@major.RoundMajorId"
+                                        selected="@(input.RoundMajorMethodId == method.RoundMajorMethodId)">@method.Name</option>
+                            }
+                        }
+                    </select>
+                    <span class="field-error" data-error-for="RoundMajorMethodId">@Err("RoundMajorMethodId")</span>
+                </div>
+
+                @* Mỗi phương thức có một khối riêng; JavaScript chỉ hiện khối của phương thức đang chọn *@
+                @foreach (var major in Model.Majors)
+                {
+                    foreach (var method in major.Methods)
+                    {
+                        <div class="method-fields" data-method="@method.RoundMajorMethodId" hidden>
+                            @if (!string.IsNullOrWhiteSpace(method.Requirements))
+                            {
+                                <p class="method-note"><strong>Điều kiện:</strong> @method.Requirements</p>
+                            }
+                            @foreach (var field in method.Fields)
+                            {
+                                var id = $"f-{method.RoundMajorMethodId}-{field.Key}";
+                                <div class="form-field">
+                                    <label for="@id">@field.Label <span aria-hidden="true">*</span></label>
+                                    <input id="@id" name="Scores[@field.Key]" inputmode="decimal" disabled
+                                           data-label="@field.Label" data-min="@field.Min" data-max="@field.Max"
+                                           value="@input.Scores.GetValueOrDefault(field.Key)" />
+                                    <p class="field-hint">Nhập số từ @field.Min đến @field.Max.</p>
+                                    <span class="field-error" data-error-for="Scores[@field.Key]">@Err($"Scores[{field.Key}]")</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </fieldset>
+
+            <div class="profile-actions">
+                <button type="submit" class="button button-primary">Gửi hồ sơ</button>
+                <a class="button button-outline" asp-controller="Candidate" asp-action="Index">Hủy</a>
+            </div>
+        </form>
+    }
+</section>
+
+@section Scripts
+{
+    <script>
+        (function () {
+            var form = document.getElementById('application-form');
+            if (!form) return;
+            var majorSelect = document.getElementById('RoundMajorId');
+            var methodSelect = document.getElementById('RoundMajorMethodId');
+            var methodOptions = Array.from(methodSelect.options).slice(1); // bỏ dòng "-- Chọn --"
+
+            // Chỉ hiện các phương thức thuộc ngành đang chọn
+            function filterMethods() {
+                methodOptions.forEach(function (o) {
+                    var show = o.dataset.major === majorSelect.value;
+                    o.hidden = !show;
+                    o.disabled = !show;
+                });
+                var current = methodSelect.selectedOptions[0];
+                if (current && current.value && current.disabled) methodSelect.value = '';
+            }
+
+            // Chỉ hiện (và gửi đi) các ô điểm của phương thức đang chọn
+            function showFields() {
+                document.querySelectorAll('.method-fields').forEach(function (block) {
+                    var active = block.dataset.method === methodSelect.value;
+                    block.hidden = !active;
+                    block.querySelectorAll('input').forEach(function (i) { i.disabled = !active; });
+                });
+            }
+
+            function setError(name, message) {
+                var span = form.querySelector('[data-error-for="' + name + '"]');
+                if (span) span.textContent = message || '';
+            }
+
+            majorSelect.addEventListener('change', function () { filterMethods(); showFields(); });
+            methodSelect.addEventListener('change', showFields);
+            filterMethods();
+            showFields();
+
+            // Kiểm tra nhanh ở trình duyệt (máy chủ vẫn kiểm tra lại)
+            form.addEventListener('submit', function (e) {
+                var ok = true;
+                setError('RoundMajorId', ''); setError('RoundMajorMethodId', '');
+                if (!majorSelect.value) { setError('RoundMajorId', 'Vui lòng chọn ngành.'); ok = false; }
+                if (!methodSelect.value) { setError('RoundMajorMethodId', 'Vui lòng chọn phương thức áp dụng cho ngành này.'); ok = false; }
+                form.querySelectorAll('.method-fields input:not(:disabled)').forEach(function (i) {
+                    var text = i.value.trim().replace(',', '.');
+                    var n = Number(text);
+                    var msg = '';
+                    if (text === '') msg = 'Vui lòng nhập ' + i.dataset.label.toLowerCase() + '.';
+                    else if (isNaN(n) || n < Number(i.dataset.min) || n > Number(i.dataset.max))
+                        msg = i.dataset.label + ' phải là số từ ' + i.dataset.min + ' đến ' + i.dataset.max + '.';
+                    setError(i.name, msg);
+                    if (msg) ok = false;
+                });
+                if (!ok) e.preventDefault();
+            });
+        })();
+    </script>
+}

@@ -12,6 +12,7 @@ public static class DatabaseInitializer
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
         if (applyMigrations) await db.Database.MigrateAsync();
+        await EnsureStatusesAsync(db); // S3-01: bảo đảm có các trạng thái hồ sơ (chỉ thêm dòng còn thiếu)
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var role in RoleNames.All)
         {
@@ -39,13 +40,37 @@ public static class DatabaseInitializer
             await using var transaction = await db.Database.BeginTransactionAsync();
             user = new ApplicationUser
             {
-                UserName = account.Email, Email = account.Email,
-                FullName = account.Name, EmailConfirmed = false
+                UserName = account.Email,
+                Email = account.Email,
+                FullName = account.Name,
+                EmailConfirmed = false
             };
             EnsureSuccess(await userManager.CreateAsync(user, password));
             EnsureSuccess(await userManager.AddToRoleAsync(user, account.Role));
             await transaction.CommitAsync();
         }
+        // S3-01: hồ sơ đăng ký mẫu (chỉ chạy khi bật DemoData và đã có tài khoản demo)
+        if (configuration.GetValue<bool>("DemoData:Enabled"))
+            await Sprint3DemoData.SeedAsync(db);
+    }
+    // Thêm các trạng thái hồ sơ còn thiếu; không sửa hay xóa dòng đã có (nhóm có thể đã nhập tay).
+    private static async Task EnsureStatusesAsync(ApplicationDbContext db)
+    {
+        var wanted = new[]
+        {
+            (Id: (byte)1, Code: "Pending", Name: "Chờ tiếp nhận"),
+            (Id: (byte)2, Code: "InReview", Name: "Đang xét duyệt"),
+            (Id: (byte)3, Code: "NeedsSupplement", Name: "Cần bổ sung"),
+            (Id: (byte)4, Code: "Approved", Name: "Đã duyệt"),
+            (Id: (byte)5, Code: "Rejected", Name: "Từ chối")
+        };
+        foreach (var item in wanted)
+        {
+            var exists = await db.ApplicationStatuses.AnyAsync(s => s.Id == item.Id || s.Code == item.Code);
+            if (!exists)
+                db.ApplicationStatuses.Add(new ApplicationStatus { Id = item.Id, Code = item.Code, Name = item.Name });
+        }
+        await db.SaveChangesAsync();
     }
     private static void EnsureSuccess(IdentityResult result)
     {

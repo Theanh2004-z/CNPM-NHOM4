@@ -15,6 +15,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ApplicationStatus> ApplicationStatuses => Set<ApplicationStatus>();
     public DbSet<CandidateProfile> CandidateProfiles => Set<CandidateProfile>();
     public DbSet<CandidateEducation> CandidateEducations => Set<CandidateEducation>();
+    public DbSet<AdmissionApplication> AdmissionApplications => Set<AdmissionApplication>();
+    public DbSet<ApplicationScore> ApplicationScores => Set<ApplicationScore>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -97,6 +99,42 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(s => s.Code).HasMaxLength(30).IsRequired();
             entity.Property(s => s.Name).HasMaxLength(100).IsRequired();
             entity.HasIndex(s => s.Code).IsUnique();
+        });
+
+        
+
+        // ===== S3-01: hồ sơ đăng ký xét tuyển =====
+        builder.Entity<AdmissionApplication>(entity =>
+        {
+            entity.HasIndex(a => a.ApplicationCode).IsUnique();   // mã hồ sơ không được trùng
+            entity.Property(a => a.ApplicationCode).HasMaxLength(30).IsRequired();
+            entity.Property(a => a.FullName).HasMaxLength(100);
+            entity.Property(a => a.DateOfBirth).HasColumnType("date");
+            entity.Property(a => a.PhoneNumber).IsUnicode(false).HasMaxLength(10);
+            entity.Property(a => a.ContactEmail).HasMaxLength(256);
+            entity.Property(a => a.SchoolName).HasMaxLength(200);
+            // Một thí sinh không nộp trùng cùng một nguyện vọng (cùng ngành + phương thức + đợt)
+            entity.HasIndex(a => new { a.UserId, a.RoundMajorMethodId }).IsUnique();
+            entity.HasOne<ApplicationUser>().WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(a => a.RoundMajorMethod).WithMany()
+                .HasForeignKey(a => a.RoundMajorMethodId)
+                .OnDelete(DeleteBehavior.Restrict);   // không cho xóa cấu hình đã có hồ sơ
+            entity.HasOne(a => a.Status).WithMany()
+                .HasForeignKey(a => a.StatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<ApplicationScore>(entity =>
+        {
+            entity.Property(x => x.FieldKey).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.FieldLabel).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Value).HasPrecision(7, 2);
+            entity.HasIndex(x => new { x.ApplicationId, x.FieldKey }).IsUnique();
+            entity.HasOne(x => x.Application).WithMany(a => a.Scores)
+                .HasForeignKey(x => x.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

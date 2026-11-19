@@ -1,0 +1,39 @@
+﻿.app-form select {
+    width: 100%;
+    height: 47px;
+}
+
+.app-form .full-row {
+    grid-column: 1 / -1;
+}
+
+.app-form .method-fields {
+    margin-top: 16px;
+}
+
+    .app-form .method-fields[hidden] {
+        display: none;
+    }
+
+.app-form .method-note {
+    background: #ecf2f6;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: .82rem;
+    margin-bottom: 16px;
+}
+
+.app-form .field-hint {
+    color: var(--muted);
+}
+
+.app-empty {
+    border: 1px solid #d8e2e8;
+    border-radius: 12px;
+    padding: 28px;
+    background: #fff;
+}
+
+    .app-empty h2 {
+        margin-top: 0;
+    }

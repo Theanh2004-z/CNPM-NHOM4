@@ -1,0 +1,179 @@
+@model TuyenSinhOnline.Models.AdmissionApplication
+@{
+    ViewData["Title"] = $"Hồ sơ {Model.ApplicationCode}";
+    var rmm = Model.RoundMajorMethod;
+    var round = rmm?.RoundMajor?.Round;
+    var major = rmm?.RoundMajor?.Major;
+    var method = rmm?.Method;
+    var statusName = Model.Status?.Name ?? "Chờ tiếp nhận";
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/candidate.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/application-form.css" asp-append-version="true" />
+    <style>
+        .status-badge-pending {
+            background: #fef9c3;
+            color: #854d0e;
+            border: 1px solid #fde047;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-badge-approved {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .code-display {
+            font-family: monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--teal);
+        }
+        .table-scores {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        .table-scores th, .table-scores td {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .table-scores th {
+            background: #f8fafc;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+        .table-scores td.score-val {
+            font-weight: 700;
+            color: var(--ink);
+            text-align: right;
+            width: 120px;
+        }
+    </style>
+}
+
+<section class="shell candidate-profile app-form" aria-labelledby="details-title">
+    <a class="text-link" asp-controller="Candidate" asp-action="Index"><span aria-hidden="true">←</span> Về Cổng thí sinh</a>
+
+    @if (TempData["SuccessMessage"] is string msg)
+    {
+        <div class="notice success" role="status" style="margin-top:16px;">
+            <strong>Thành công!</strong> @msg
+        </div>
+    }
+
+    <header class="profile-heading" style="margin-top:16px;">
+        <div>
+            <span class="eyebrow">HỒ SƠ XÉT TUYỂN TRỰC TUYẾN</span>
+            <h1 id="details-title">Mã hồ sơ: <span class="code-display">@Model.ApplicationCode</span></h1>
+            <p>Thời điểm nộp: <strong>@Model.SubmittedAt.ToString("dd/MM/yyyy HH:mm:ss")</strong> (Giờ Việt Nam UTC+7)</p>
+        </div>
+        <div>
+            <span class="status-badge-pending" aria-label="Trạng thái hồ sơ">
+                <span class="status-dot" style="background:#eab308;" aria-hidden="true"></span>
+                @statusName
+            </span>
+        </div>
+    </header>
+
+    <div class="profile-panels">
+        @* Khối 1: Nguyện vọng đăng ký *@
+        <section class="profile-panel" aria-labelledby="target-title">
+            <h2 id="target-title">Nguyện vọng đăng ký</h2>
+            <dl class="profile-details">
+                <dt>Đợt tuyển sinh</dt>
+                <dd>@(round?.Name ?? "Đợt xét tuyển") (@(round?.Code)) - Năm @(round?.AdmissionYear)</dd>
+                <dt>Ngành xét tuyển</dt>
+                <dd><strong>@(major?.Name ?? "Ngành xét tuyển")</strong> (Mã ngành: @(major?.Code))</dd>
+                <dt>Phương thức</dt>
+                <dd>@(method?.Name ?? "Phương thức xét tuyển") (Mã: @(method?.Code))</dd>
+                @if (!string.IsNullOrWhiteSpace(method?.RequirementsDescription))
+                {
+                    <dt>Điều kiện PT</dt>
+                    <dd>@method.RequirementsDescription</dd>
+                }
+            </dl>
+        </section>
+
+        @* Khối 2: Trạng thái tiếp nhận *@
+        <section class="profile-panel" aria-labelledby="status-info-title">
+            <h2 id="status-info-title">Tiến trình xử lý hồ sơ</h2>
+            <div class="candidate-permission" style="margin-top:8px;">
+                <span class="check-circle" aria-hidden="true">✓</span>
+                <p><strong>Hồ sơ đã được lưu trữ an toàn:</strong> Toàn bộ dữ liệu xét tuyển đã được ghi nhận vào hệ thống CSDL và giữ nguyên trạng thái bất biến (Snapshot).</p>
+            </div>
+            <p style="margin-top:12px;font-size:0.88rem;color:var(--muted);">
+                Hồ sơ của bạn đang ở trạng thái <strong>@statusName</strong>. Hội đồng tuyển sinh sẽ kiểm tra hồ sơ và cập nhật kết quả trong thời gian sớm nhất.
+            </p>
+        </section>
+    </div>
+
+    @* Khối 3: Bản chụp thông tin cá nhân & học vấn lúc nộp *@
+    <div class="profile-panels" style="margin-top:20px;">
+        <section class="profile-panel" aria-labelledby="snap-personal-title">
+            <h2 id="snap-personal-title">Thông tin thí sinh (Snapshot lúc nộp)</h2>
+            <dl class="profile-details">
+                <dt>Họ và tên</dt>
+                <dd>@Model.FullName</dd>
+                <dt>Ngày sinh</dt>
+                <dd>@Model.DateOfBirth.ToString("dd/MM/yyyy")</dd>
+                <dt>Số điện thoại</dt>
+                <dd>@Model.PhoneNumber</dd>
+                <dt>Email liên hệ</dt>
+                <dd>@Model.ContactEmail</dd>
+                <dt>Trường THPT</dt>
+                <dd>@Model.SchoolName</dd>
+                <dt>Năm tốt nghiệp</dt>
+                <dd>@Model.GraduationYear</dd>
+            </dl>
+        </section>
+
+        @* Khối 4: Điểm xét tuyển đã nộp *@
+        <section class="profile-panel" aria-labelledby="snap-scores-title">
+            <h2 id="snap-scores-title">Dữ liệu điểm xét tuyển đã khai báo</h2>
+            @if (Model.Scores.Count == 0)
+            {
+                <p style="color:var(--muted);font-size:0.9rem;">Không có trường điểm nào được lưu.</p>
+            }
+            else
+            {
+                <table class="table-scores">
+                    <thead>
+                        <tr>
+                            <th>Mục / Môn xét tuyển</th>
+                            <th style="text-align:right;">Điểm đã nộp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var score in Model.Scores)
+                        {
+                            <tr>
+                                <td>@score.FieldLabel</td>
+                                <td class="score-val">@score.Value.ToString("G29")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    </div>
+
+    <div class="profile-actions" style="margin-top:28px;">
+        <a class="button button-primary" asp-controller="ApplicationForm" asp-action="Index">Danh sách hồ sơ của tôi</a>
+        <a class="button button-outline" asp-controller="ApplicationForm" asp-action="Create">Đăng ký nguyện vọng khác</a>
+        <a class="button button-outline" asp-controller="Candidate" asp-action="Index">Về Cổng thí sinh</a>
+        <button type="button" class="button button-outline" onclick="window.print()">In phiếu xác nhận</button>
+    </div>
+</section>

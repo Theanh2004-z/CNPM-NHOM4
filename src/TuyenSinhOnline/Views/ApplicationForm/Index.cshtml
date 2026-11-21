@@ -1,0 +1,142 @@
+@model TuyenSinhOnline.Models.ApplicationListViewModel
+@{
+    ViewData["Title"] = "Hồ sơ xét tuyển của tôi";
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/candidate.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/application-form.css" asp-append-version="true" />
+    <style>
+        .status-badge-pending {
+            background: #fef9c3;
+            color: #854d0e;
+            border: 1px solid #fde047;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .code-chip {
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--teal);
+        }
+    </style>
+}
+
+<div class="shell management-page">
+    <a class="text-link" asp-controller="Candidate" asp-action="Index"><span aria-hidden="true">←</span> Về Cổng thí sinh</a>
+
+    <header class="management-heading" style="margin-top:16px;">
+        <div>
+            <span class="eyebrow">KHÔNG GIAN THÍ SINH</span>
+            <h1>Hồ sơ xét tuyển của tôi</h1>
+            <p>Theo dõi danh sách các nguyện vọng xét tuyển đã nộp, thời gian nộp và tiến trình xử lý từ Hội đồng tuyển sinh.</p>
+        </div>
+        <div>
+            <a class="button button-primary" asp-action="Create">Nộp nguyện vọng mới <span aria-hidden="true">+</span></a>
+        </div>
+    </header>
+
+    @if (Model.TotalCount == 0)
+    {
+        <div class="app-empty" style="text-align:center;padding:48px 24px;">
+            <h2 style="margin-bottom:8px;">Bạn chưa nộp hồ sơ xét tuyển nào</h2>
+            <p style="color:var(--muted);max-width:550px;margin:0 auto 20px;">
+                Bạn có thể tìm hiểu các ngành học đang mở tiếp nhận trong đợt tuyển sinh và nộp hồ sơ đăng ký trực tuyến ngay bây giờ.
+            </p>
+            <a class="button button-primary" asp-action="Create">Đăng ký xét tuyển ngay <span aria-hidden="true">↗</span></a>
+        </div>
+    }
+    else
+    {
+        <form asp-action="Index" method="get" class="filter-bar">
+            <label for="filter-round">
+                Đợt tuyển sinh
+                <select id="filter-round" name="roundId">
+                    <option value="">-- Tất cả các đợt --</option>
+                    @foreach (var round in Model.Rounds)
+                    {
+                        <option value="@round.Id" selected="@(round.Id == Model.SelectedRoundId)">@round.Code — @round.Name</option>
+                    }
+                </select>
+            </label>
+            <label for="filter-search">
+                Tìm mã hồ sơ hoặc ngành
+                <input id="filter-search" name="q" value="@Model.Search" placeholder="Nhập mã hồ sơ (HS...) hoặc tên ngành" />
+            </label>
+            <button type="submit" class="button button-primary">Tra cứu</button>
+            @if (Model.SelectedRoundId.HasValue || !string.IsNullOrEmpty(Model.Search))
+            {
+                <a class="text-link" asp-action="Index">Bỏ lọc <span aria-hidden="true">×</span></a>
+            }
+        </form>
+
+        @if (Model.Applications.Count == 0)
+        {
+            <div class="app-empty" style="text-align:center;padding:36px;">
+                <h3>Không tìm thấy hồ sơ phù hợp</h3>
+                <p style="color:var(--muted);">Thử chọn đợt tuyển sinh khác hoặc xóa từ khóa tìm kiếm để xem toàn bộ hồ sơ đã nộp.</p>
+                <a class="button button-outline" asp-action="Index">Xem tất cả hồ sơ</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table>
+                    <caption>Danh sách các hồ sơ đăng ký xét tuyển đã gửi của bạn (@Model.Applications.Count hồ sơ)</caption>
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã hồ sơ</th>
+                            <th>Đợt tuyển sinh</th>
+                            <th>Ngành đăng ký</th>
+                            <th>Phương thức</th>
+                            <th>Thời gian nộp</th>
+                            <th>Trạng thái</th>
+                            <th style="text-align:right;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ var index = 1; }
+                        @foreach (var item in Model.Applications)
+                        {
+                            var rmm = item.RoundMajorMethod;
+                            var round = rmm?.RoundMajor?.Round;
+                            var major = rmm?.RoundMajor?.Major;
+                            var method = rmm?.Method;
+                            var status = item.Status?.Name ?? "Chờ tiếp nhận";
+                            <tr>
+                                <td>@(index++)</td>
+                                <td>
+                                    <a class="code-chip" asp-action="Details" asp-route-id="@item.Id">@item.ApplicationCode</a>
+                                </td>
+                                <td>@(round?.Name ?? "—")</td>
+                                <td>
+                                    <strong>@(major?.Name ?? "—")</strong>
+                                    <br /><small style="color:var(--muted);">Mã: @(major?.Code ?? "—")</small>
+                                </td>
+                                <td>@(method?.Name ?? "—")</td>
+                                <td>@item.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="status-badge-pending">
+                                        <span class="status-dot" style="background:#eab308;" aria-hidden="true"></span>
+                                        @status
+                                    </span>
+                                </td>
+                                <td style="text-align:right;">
+                                    <a class="button button-outline button-small" asp-action="Details" asp-route-id="@item.Id">Xem chi tiết <span aria-hidden="true">→</span></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</div>

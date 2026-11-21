@@ -27,12 +27,20 @@
         <p class="notice success" role="status">@ok</p>
     }
 
-    @if (Model.Profile is null)
+    @if (Model.IncompleteProfile)
     {
         <div class="app-empty" role="alert">
-            <h2>Bạn chưa tạo hồ sơ cá nhân</h2>
-            <p>Cần có hồ sơ cá nhân trước khi nộp hồ sơ xét tuyển.</p>
-            <a class="button button-primary" asp-controller="CandidateProfile" asp-action="Edit">Tạo hồ sơ cá nhân</a>
+            <h2>Bạn chưa hoàn thiện hồ sơ cá nhân</h2>
+            <p>Cần có đầy đủ thông tin cá nhân (họ tên, ngày sinh, số điện thoại, email) trước khi nộp hồ sơ xét tuyển.</p>
+            <a class="button button-primary" asp-controller="CandidateProfile" asp-action="Edit">Hoàn thiện hồ sơ cá nhân</a>
+        </div>
+    }
+    else if (Model.MissingEducation)
+    {
+        <div class="app-empty" role="alert">
+            <h2>Thông tin học tập cấp THPT chưa đầy đủ</h2>
+            <p>Vui lòng cập nhật trường THPT và năm tốt nghiệp trước khi đăng ký xét tuyển.</p>
+            <a class="button button-primary" asp-controller="CandidateProfile" asp-action="Edit">Hoàn thiện hồ sơ học tập</a>
         </div>
     }
     else if (Model.Round is null)
@@ -41,6 +49,19 @@
             <h2>Hiện chưa có đợt xét tuyển nào đang mở</h2>
             <p>Bạn hãy quay lại khi nhà trường mở đợt tiếp nhận hồ sơ.</p>
             <a class="button button-outline" asp-controller="Candidate" asp-action="Index">Xem kế hoạch tuyển sinh</a>
+        </div>
+    }
+    else if (TuyenSinhOnline.Models.Management.AdmissionClock.Status(Model.Round) != "Đang mở")
+    {
+        var statusText = TuyenSinhOnline.Models.Management.AdmissionClock.Status(Model.Round);
+        <div class="app-empty" role="alert">
+            <h2>Đợt xét tuyển @Model.Round.Name (@statusText.ToLower())</h2>
+            <p>
+                @(statusText == "Đã đóng" ? $"Đợt tuyển sinh này đã kết thúc tiếp nhận hồ sơ vào lúc {Model.Round.EndAt:dd/MM/yyyy HH:mm}."
+                : statusText == "Chưa mở" ? $"Đợt tuyển sinh này sẽ bắt đầu tiếp nhận hồ sơ từ {Model.Round.StartAt:dd/MM/yyyy HH:mm}."
+                : "Đợt tuyển sinh này hiện đang tạm dừng tiếp nhận hồ sơ.")
+            </p>
+            <a class="button button-outline" asp-controller="Candidate" asp-action="Index">Xem các đợt đang mở khác</a>
         </div>
     }
     else if (Model.Majors.Count == 0)
@@ -52,8 +73,25 @@
     }
     else
     {
-        var profile = Model.Profile;
+        var profile = Model.Profile!;
+        var round = Model.Round!;
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="notice error" role="alert" style="background:#fde8e8;border:1px solid #f8b4b4;color:#9b1c1c;margin-bottom:20px;padding:14px 18px;border-radius:8px;">
+                <strong>Vui lòng kiểm tra lại thông tin:</strong>
+                <ul style="margin:8px 0 0 20px;padding:0;">
+                    @foreach (var modelState in ViewData.ModelState.Values)
+                    {
+                        foreach (var error in modelState.Errors)
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    }
+                </ul>
+            </div>
+        }
         <form asp-action="Create" method="post" id="application-form" novalidate>
+            <input type="hidden" name="RoundId" value="@round.Id" />
             <div class="profile-panels">
                 <section class="profile-panel" aria-labelledby="personal-title">
                     <h2 id="personal-title">Thông tin cá nhân</h2>
@@ -79,11 +117,11 @@
                     <h2 id="round-title">Đợt xét tuyển đang mở</h2>
                     <dl class="profile-details">
                         <dt>Tên đợt</dt>
-                        <dd>@Model.Round.Name</dd>
+                        <dd>@round.Name</dd>
                         <dt>Mã đợt · Năm</dt>
-                        <dd>@Model.Round.Code · @Model.Round.AdmissionYear</dd>
+                        <dd>@round.Code · @round.AdmissionYear</dd>
                         <dt>Hạn nộp hồ sơ</dt>
-                        <dd>@Model.Round.EndAt.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</dd>
+                        <dd>@round.EndAt.ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam)</dd>
                     </dl>
                 </section>
             </div>
@@ -210,7 +248,15 @@
                     setError(i.name, msg);
                     if (msg) ok = false;
                 });
-                if (!ok) e.preventDefault();
+                if (!ok) {
+                    e.preventDefault();
+                } else {
+                    var submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Đang gửi hồ sơ...';
+                    }
+                }
             });
         })();
     </script>

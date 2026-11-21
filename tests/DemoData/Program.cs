@@ -2,8 +2,17 @@ using Microsoft.EntityFrameworkCore;
 using TuyenSinhOnline.Data;
 
 var database = "CNPM_Sprint1_Fix_Seed_" + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid().ToString("N")[..4];
+var connStr = $"Server=(localdb)\\MSSQLLocalDB;Database={database};Trusted_Connection=True;TrustServerCertificate=True";
+try
+{
+    using var testConn = new Microsoft.Data.SqlClient.SqlConnection("Server=.;Database=master;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=1");
+    testConn.Open();
+    connStr = $"Server=.;Database={database};Trusted_Connection=True;TrustServerCertificate=True";
+}
+catch { }
+
 var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-    .UseSqlServer($"Server=.;Database={database};Trusted_Connection=True;TrustServerCertificate=True").Options;
+    .UseSqlServer(connStr).Options;
 await using var db = new ApplicationDbContext(options);
 await db.Database.MigrateAsync();
 var passed = 0;

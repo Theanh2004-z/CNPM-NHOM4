@@ -48,6 +48,7 @@ public class FormMajor
 /// <summary>Dữ liệu thí sinh gửi lên từ form.</summary>
 public class ApplicationFormInput
 {
+    public int? RoundId { get; set; }
     public int? RoundMajorId { get; set; }
     public int? RoundMajorMethodId { get; set; }
     /// <summary>Điểm theo từng trường: Scores[Mon1], Scores[Mon2]...</summary>
@@ -61,4 +62,21 @@ public class ApplicationFormPage
     public AdmissionRound? Round { get; init; }              // null = chưa có đợt đang mở
     public List<FormMajor> Majors { get; init; } = [];
     public ApplicationFormInput Input { get; init; } = new();
+    public bool IncompleteProfile => Profile is null 
+        || string.IsNullOrWhiteSpace(Profile.FullName) 
+        || string.IsNullOrWhiteSpace(Profile.PhoneNumber) 
+        || string.IsNullOrWhiteSpace(Profile.ContactEmail) 
+        || Profile.DateOfBirth == default;
+    public bool MissingEducation => !IncompleteProfile && (Profile?.Education is null || string.IsNullOrWhiteSpace(Profile.Education.SchoolName) || Profile.Education.GraduationYear <= 0);
+    public bool CanApply => !IncompleteProfile && !MissingEducation && Round is not null && Majors.Count > 0;
+}
+
+/// <summary>Dữ liệu danh sách hồ sơ đã nộp của thí sinh (S3-05).</summary>
+public class ApplicationListViewModel
+{
+    public List<AdmissionApplication> Applications { get; init; } = [];
+    public List<AdmissionRound> Rounds { get; init; } = [];
+    public int? SelectedRoundId { get; init; }
+    public string Search { get; init; } = string.Empty;
+    public int TotalCount { get; init; }
 }

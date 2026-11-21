@@ -36,7 +36,8 @@ if (-not $NoDemo) {
     $env:DemoAccounts__Password = (Get-Content -LiteralPath $passwordPath -Raw).Trim()
     @(
         'Tai khoan demo chi dung tren may phat trien:',
-        'Thi sinh: thisinh.demo@tuyensinh.local',
+        'Thi sinh 1 (co san ho so): thisinh.demo@tuyensinh.local',
+        'Thi sinh 2 (chua co ho so): thisinh2.demo@tuyensinh.local',
         'Can bo: canbo.demo@tuyensinh.local',
         'Quan tri: admin.demo@tuyensinh.local',
         ('Mat khau chung: ' + $env:DemoAccounts__Password),

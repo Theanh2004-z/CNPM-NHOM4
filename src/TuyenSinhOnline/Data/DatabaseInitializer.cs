@@ -30,6 +30,7 @@ public static class DatabaseInitializer
         var accounts = new[]
         {
             (Email: "thisinh.demo@tuyensinh.local", Name: "Thí sinh Demo", Role: RoleNames.Candidate),
+            (Email: "thisinh2.demo@tuyensinh.local", Name: "Thí sinh Chưa Có Hồ Sơ", Role: RoleNames.Candidate),
             (Email: "canbo.demo@tuyensinh.local", Name: "Cán bộ Demo", Role: RoleNames.AdmissionsOfficer),
             (Email: "admin.demo@tuyensinh.local", Name: "Quản trị viên Demo", Role: RoleNames.Administrator)
         };

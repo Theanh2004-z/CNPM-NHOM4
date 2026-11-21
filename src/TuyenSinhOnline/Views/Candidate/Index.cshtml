@@ -29,6 +29,7 @@
         <a class="candidate-step is-current" href="#tra-cuu"><span class="candidate-step-number">01</span><span><strong>Tìm hiểu tuyển sinh</strong><small>Đang sử dụng · Tra cứu bên dưới</small></span><span aria-hidden="true">↗</span></a>
         <a class="candidate-step is-current" asp-controller="CandidateProfile" asp-action="Index"><span class="candidate-step-number">02</span><span><strong>Hồ sơ cá nhân</strong><small>Đang sử dụng · Xem và cập nhật</small></span><span aria-hidden="true">↗</span></a>
         <a class="candidate-step is-current" asp-controller="ApplicationForm" asp-action="Create"><span class="candidate-step-number">03</span><span><strong>Đăng ký xét tuyển</strong><small>Đang sử dụng · Nộp hồ sơ</small></span><span aria-hidden="true">↗</span></a>
+        <a class="candidate-step is-current" asp-controller="ApplicationForm" asp-action="Index"><span class="candidate-step-number">04</span><span><strong>Hồ sơ đã nộp</strong><small>Đã nộp: @Model.ApplicationCount nguyện vọng</small></span><span aria-hidden="true">↗</span></a>
     </nav>
     <section class="shell candidate-catalog" id="tra-cuu" aria-labelledby="catalog-title">
         <div class="candidate-section-title"><div><span class="eyebrow">THÔNG TIN TUYỂN SINH</span><h2 id="catalog-title">Chọn đợt. Tìm ngành bạn quan tâm.</h2></div><span class="candidate-readonly">Chỉ xem thông tin</span></div>
@@ -101,5 +102,62 @@
             }
         }
     </section>
-    <section class="shell candidate-next" aria-labelledby="candidate-next-title"><span class="candidate-next-icon" aria-hidden="true">03</span><div><span class="eyebrow">BƯỚC TIẾP THEO</span><h2 id="candidate-next-title">Đăng ký xét tuyển sẽ được mở sau</h2><p>Bạn có thể lưu hồ sơ cá nhân để chuẩn bị đăng ký xét tuyển khi chức năng được mở.</p></div><span class="future-label">Chưa triển khai</span></section>
+    <section class="shell candidate-applications-summary" aria-labelledby="applications-summary-title" style="margin-block:35px;">
+        <div class="candidate-section-title">
+            <div>
+                <span class="eyebrow">HỒ SƠ CỦA BẠN</span>
+                <h2 id="applications-summary-title">Nguyện vọng xét tuyển đã nộp (@Model.ApplicationCount)</h2>
+            </div>
+            @if (Model.ApplicationCount > 0)
+            {
+                <a class="button button-outline" asp-controller="ApplicationForm" asp-action="Index">Xem tất cả hồ sơ <span aria-hidden="true">→</span></a>
+            }
+        </div>
+
+        @if (Model.ApplicationCount == 0)
+        {
+            <div class="candidate-empty" style="padding:28px 24px;">
+                <h3>Bạn chưa nộp hồ sơ xét tuyển nào</h3>
+                <p>Hãy tra cứu ngành học yêu thích bên trên và bấm nộp hồ sơ xét tuyển trực tuyến.</p>
+                <a class="button button-primary" asp-controller="ApplicationForm" asp-action="Create">Đăng ký xét tuyển ngay <span aria-hidden="true">↗</span></a>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mã hồ sơ</th>
+                            <th>Ngành đăng ký</th>
+                            <th>Thời gian nộp</th>
+                            <th>Trạng thái</th>
+                            <th style="text-align:right;">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in Model.RecentApplications)
+                        {
+                            var rmm = app.RoundMajorMethod;
+                            var major = rmm?.RoundMajor?.Major;
+                            var status = app.Status?.Name ?? "Chờ tiếp nhận";
+                            <tr>
+                                <td>
+                                    <strong style="font-family:monospace;color:var(--teal);">@app.ApplicationCode</strong>
+                                </td>
+                                <td>@(major?.Name ?? "—") (@(major?.Code ?? "—"))</td>
+                                <td>@app.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="badge active" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047;">@status</span>
+                                </td>
+                                <td style="text-align:right;">
+                                    <a class="link-button" asp-controller="ApplicationForm" asp-action="Details" asp-route-id="@app.Id">Xem hồ sơ <span aria-hidden="true">→</span></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
 </div>

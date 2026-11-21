@@ -49,12 +49,35 @@ public class CandidateController(ApplicationDbContext db) : Controller
                     }).ToList()
             }).ToListAsync();
         }
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var applicationCount = 0;
+        var recentApplications = new List<AdmissionApplication>();
+
+        if (userId is not null)
+        {
+            applicationCount = await db.AdmissionApplications.CountAsync(a => a.UserId == userId);
+            recentApplications = await db.AdmissionApplications.AsNoTracking()
+                .Where(a => a.UserId == userId)
+                .Include(a => a.Status)
+                .Include(a => a.RoundMajorMethod)
+                    .ThenInclude(rmm => rmm!.RoundMajor)
+                        .ThenInclude(rm => rm!.Major)
+                .Include(a => a.RoundMajorMethod)
+                    .ThenInclude(rmm => rmm!.RoundMajor)
+                        .ThenInclude(rm => rm!.Round)
+                .OrderByDescending(a => a.SubmittedAt)
+                .Take(3)
+                .ToListAsync();
+        }
+
         return View(new CandidateHome
         {
             FullName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity!.Name!,
             Email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity!.Name!,
             Rounds = rounds, SelectedRound = selected, Search = search, Majors = majors,
-            RoundStatus = selected is null ? string.Empty : AdmissionClock.Status(selected, now)
+            RoundStatus = selected is null ? string.Empty : AdmissionClock.Status(selected, now),
+            ApplicationCount = applicationCount,
+            RecentApplications = recentApplications
         });
     }
 }

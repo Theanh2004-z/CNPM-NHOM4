@@ -11,8 +11,17 @@ using TuyenSinhOnline.Security;
 
 // Chỉ tạo và thay đổi dữ liệu trong database thử riêng của lần chạy này.
 var database = "CNPM_Staff_Test_" + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid().ToString("N")[..4];
+var connStr = $"Server=(localdb)\\MSSQLLocalDB;Database={database};Trusted_Connection=True;TrustServerCertificate=True";
+try
+{
+    using var testConn = new Microsoft.Data.SqlClient.SqlConnection("Server=.;Database=master;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=1");
+    testConn.Open();
+    connStr = $"Server=.;Database={database};Trusted_Connection=True;TrustServerCertificate=True";
+}
+catch { }
+
 await using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-    .UseSqlServer($"Server=.;Database={database};Trusted_Connection=True;TrustServerCertificate=True").Options);
+    .UseSqlServer(connStr).Options);
 await db.Database.MigrateAsync();
 ControllerContext Context(string role) => new() { HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity(
     [new Claim(ClaimTypes.GivenName, "Người kiểm thử"), new Claim(ClaimTypes.Email, "staff@example.com"), new Claim(ClaimTypes.Role, role)], "test")) } };

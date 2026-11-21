@@ -31,7 +31,9 @@
                     <a class="nav-link @(currentController == "Home" ? "is-active" : "")" asp-controller="Home" asp-action="Index">Trang chủ</a>
                     @if (signedIn)
                     {
-                        <a class="nav-link @(currentController != "Home" && currentController != "Account" ? "is-active" : "")" asp-controller="Dashboard" asp-action="Index">@workspaceLabel</a>
+                        <a class="nav-link @(currentController == "Candidate" || currentController == "CandidateProfile" ? "is-active" : currentController != "Home" && currentController != "Account" && currentController != "ApplicationForm" ? "is-active" : "")" asp-controller="Dashboard" asp-action="Index">@workspaceLabel</a>
+                        @if (User.IsInRole(TuyenSinhOnline.Security.RoleNames.Candidate))
+                        { <a class="nav-link @(currentController == "ApplicationForm" ? "is-active" : "")" asp-controller="ApplicationForm" asp-action="Index">Hồ sơ đã nộp</a> }
                         @if (User.IsInRole(TuyenSinhOnline.Security.RoleNames.Administrator))
                         { <a class="nav-link" asp-controller="AdmissionRounds" asp-action="Index">Quản lý tuyển sinh</a> }
                     }
@@ -52,7 +54,7 @@
         </nav>
     </header>
     <main id="main-content" tabindex="-1">@RenderBody()</main>
-    <footer class="site-footer"><div class="shell footer-content"><div><strong>TuyenSinhOnline</strong><span>Đồ án Công nghệ phần mềm · Sprint 1</span></div><a asp-controller="Home" asp-action="Privacy">Thông tin &amp; quyền riêng tư <span aria-hidden="true">↗</span></a></div></footer>
+    <footer class="site-footer"><div class="shell footer-content"><div><strong>TuyenSinhOnline</strong><span>Đồ án Công nghệ phần mềm · Sprint 3</span></div><a asp-controller="Home" asp-action="Privacy">Thông tin &amp; quyền riêng tư <span aria-hidden="true">↗</span></a></div></footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

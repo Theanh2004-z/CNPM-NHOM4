@@ -9,6 +9,8 @@ public class CandidateHome
     public string RoundStatus { get; init; } = string.Empty;
     public string Search { get; init; } = string.Empty;
     public List<CandidateMajor> Majors { get; init; } = [];
+    public int ApplicationCount { get; init; }
+    public List<AdmissionApplication> RecentApplications { get; init; } = [];
 }
 
 public class CandidateMajor

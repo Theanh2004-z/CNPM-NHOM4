@@ -1,8 +1,11 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using TuyenSinhOnline.Controllers;
 using TuyenSinhOnline.Data;
 using TuyenSinhOnline.Models;
@@ -11,24 +14,56 @@ using TuyenSinhOnline.Security;
 
 // Tất cả thay đổi trong chương trình này chỉ dùng database thử vừa tạo riêng.
 var database = "CNPM_Candidate_Test_" + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid().ToString("N")[..4];
-await using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-    .UseSqlServer($"Server=.;Database={database};Trusted_Connection=True;TrustServerCertificate=True").Options);
+var connStr = $"Server=(localdb)\\MSSQLLocalDB;Database={database};Trusted_Connection=True;TrustServerCertificate=True";
+try
+{
+    using var testConn = new Microsoft.Data.SqlClient.SqlConnection("Server=.;Database=master;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=1");
+    testConn.Open();
+    connStr = $"Server=.;Database={database};Trusted_Connection=True;TrustServerCertificate=True";
+}
+catch { }
+
+var services = new ServiceCollection();
+services.AddLogging();
+services.AddControllersWithViews();
+services.AddDbContext<ApplicationDbContext>(opt => opt.UseSqlServer(connStr));
+services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+var sp = services.BuildServiceProvider();
+
+await using var db = sp.GetRequiredService<ApplicationDbContext>();
 await db.Database.MigrateAsync();
+await DatabaseInitializer.InitializeAsync(sp, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+    new Microsoft.Extensions.Hosting.Internal.HostingEnvironment { EnvironmentName = "Development" }, false);
 await Sprint1DemoData.SeedAsync(db);
+
+var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
+var tempDataProvider = sp.GetRequiredService<ITempDataProvider>();
+
 var controller = new CandidateController(db)
 {
-    ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(
-        new ClaimsIdentity([new Claim(ClaimTypes.GivenName, "Thí sinh kiểm thử"), new Claim(ClaimTypes.Email, "candidate@example.com"),
-            new Claim(ClaimTypes.Role, RoleNames.Candidate)], "test")) } }
+    ControllerContext = new ControllerContext
+    {
+        HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity([
+                new Claim(ClaimTypes.GivenName, "Thí sinh kiểm thử"),
+                new Claim(ClaimTypes.Email, "candidate@example.com"),
+                new Claim(ClaimTypes.Role, RoleNames.Candidate)
+            ], "test"))
+        }
+    }
 };
+
 var passed = 0;
 void Check(bool condition, string description)
 {
     if (!condition) throw new InvalidOperationException("FAIL: " + description);
     Console.WriteLine("PASS: " + description); passed++;
 }
+
 async Task<CandidateHome> Home(int? roundId = null, string? q = null) =>
     (CandidateHome)((ViewResult)await controller.Index(roundId, q)).Model!;
+
 async Task<string> Snapshot() => JsonSerializer.Serialize(new
 {
     Majors = await db.Majors.AsNoTracking().OrderBy(x => x.Id).Select(x => new { x.Id, x.Code, x.Name, x.IsActive }).ToListAsync(),
@@ -37,6 +72,7 @@ async Task<string> Snapshot() => JsonSerializer.Serialize(new
     Methods = await db.AdmissionMethods.AsNoTracking().OrderBy(x => x.Id).Select(x => new { x.Id, x.IsActive }).ToListAsync(),
     Links = await db.RoundMajorMethods.AsNoTracking().OrderBy(x => x.Id).Select(x => new { x.Id, x.IsEnabled }).ToListAsync()
 });
+
 var round = await db.AdmissionRounds.SingleAsync(x => x.Code == "TS2027-D1");
 var next = await db.AdmissionRounds.SingleAsync(x => x.Code == "TS2027-D2");
 var it = await db.Majors.SingleAsync(x => x.Code == "7480201");
@@ -80,5 +116,173 @@ Check(await controller.Index(next.Id, null) is NotFoundResult && (await Home()).
 round.IsActive = false; await db.SaveChangesAsync();
 home = await Home();
 Check(home.SelectedRound is null && home.Rounds.Count == 0 && home.Majors.Count == 0, "Chưa có đợt đang sử dụng trả trạng thái rỗng an toàn");
-Console.WriteLine($"{passed}/{passed} PASS");
-Console.WriteLine("Database thử: " + database);
+
+// ==========================================
+// KIỂM THỬ SPRINT 3 (S3-03, S3-04, S3-05)
+// ==========================================
+round.IsActive = true;
+round.StartAt = now.AddDays(-1);
+round.EndAt = now.AddDays(1);
+it.IsActive = true;
+quota.IsEnabled = true;
+transcript.IsActive = true;
+transcriptLink.IsEnabled = true;
+exam.IsActive = true;
+await db.SaveChangesAsync();
+
+// 1. Tạo 2 tài khoản thí sinh để kiểm thử bảo mật & IDOR
+var testUserA = new ApplicationUser { UserName = "candidate_a@test.local", Email = "candidate_a@test.local", FullName = "Nguyễn Văn A" };
+await userManager.CreateAsync(testUserA, "Test@123456");
+await userManager.AddToRoleAsync(testUserA, RoleNames.Candidate);
+
+var testUserB = new ApplicationUser { UserName = "candidate_b@test.local", Email = "candidate_b@test.local", FullName = "Trần Thị B" };
+await userManager.CreateAsync(testUserB, "Test@123456");
+await userManager.AddToRoleAsync(testUserB, RoleNames.Candidate);
+
+ApplicationFormController CreateAppController(ApplicationUser user)
+{
+    var httpContext = new DefaultHttpContext
+    {
+        User = new ClaimsPrincipal(new ClaimsIdentity([
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Name, user.Email!),
+            new Claim(ClaimTypes.Role, RoleNames.Candidate)
+        ], "test"))
+    };
+    return new ApplicationFormController(db, userManager)
+    {
+        ControllerContext = new ControllerContext { HttpContext = httpContext },
+        TempData = new TempDataDictionary(httpContext, tempDataProvider)
+    };
+}
+
+var appCtrlA = CreateAppController(testUserA);
+
+// S3-03: Kiểm tra điều kiện phía server (TC03, TC04, TC11)
+var getCreate = (ViewResult)await appCtrlA.Create(roundId: null, CancellationToken.None);
+var pageModel = (ApplicationFormPage)getCreate.Model!;
+Check(pageModel.IncompleteProfile, "S3-03: Thí sinh A chưa có hồ sơ báo IncompleteProfile (TC03)");
+
+var postFailNoProfile = (ViewResult)await appCtrlA.Create(new ApplicationFormInput
+{
+    RoundId = round.Id, RoundMajorId = quota.Id, RoundMajorMethodId = transcriptLink.Id
+}, CancellationToken.None);
+Check(!appCtrlA.ModelState.IsValid, "S3-03: Chặn nộp hồ sơ khi chưa có hồ sơ cá nhân (TC03)");
+
+// Tạo Profile nhưng chưa có Education
+var profileA = new CandidateProfile
+{
+    UserId = testUserA.Id,
+    FullName = "Nguyễn Văn A",
+    DateOfBirth = new DateOnly(2008, 1, 1),
+    PhoneNumber = "0912345678",
+    ContactEmail = "candidate_a@test.local",
+    UpdatedAt = DateTime.UtcNow
+};
+db.CandidateProfiles.Add(profileA);
+await db.SaveChangesAsync();
+
+appCtrlA.ModelState.Clear();
+var postFailNoEdu = (ViewResult)await appCtrlA.Create(new ApplicationFormInput
+{
+    RoundId = round.Id, RoundMajorId = quota.Id, RoundMajorMethodId = transcriptLink.Id
+}, CancellationToken.None);
+Check(!appCtrlA.ModelState.IsValid, "S3-03: Chặn nộp hồ sơ khi thiếu học vấn THPT (TC04)");
+
+// Cập nhật đủ học vấn THPT
+profileA.Education = new CandidateEducation
+{
+    CandidateProfileId = profileA.Id,
+    SchoolName = "THPT Chuyên Test",
+    GraduationYear = 2026
+};
+await db.SaveChangesAsync();
+
+// Kiểm tra điểm ngoài miền quy định (TongHocBa max = 30)
+appCtrlA.ModelState.Clear();
+var postFailScore = (ViewResult)await appCtrlA.Create(new ApplicationFormInput
+{
+    RoundId = round.Id,
+    RoundMajorId = quota.Id,
+    RoundMajorMethodId = transcriptLink.Id,
+    Scores = { ["TongHocBa"] = "35" }
+}, CancellationToken.None);
+Check(!appCtrlA.ModelState.IsValid, "S3-03: Điểm vượt quá miền cho phép bị từ chối (TC11)");
+
+// S3-04: Nộp hồ sơ hợp lệ, sinh mã, lưu snapshot, trạng thái ban đầu (TC15, TC16, TC17, TC18)
+appCtrlA.ModelState.Clear();
+var postSuccess = await appCtrlA.Create(new ApplicationFormInput
+{
+    RoundId = round.Id,
+    RoundMajorId = quota.Id,
+    RoundMajorMethodId = transcriptLink.Id,
+    Scores = { ["TongHocBa"] = "28.5" }
+}, CancellationToken.None);
+
+Check(postSuccess is RedirectToActionResult redirect && redirect.ActionName == "Details",
+    "S3-04: Nộp thành công chuyển hướng PRG sang Details (TC15, TC20)");
+
+var appId = (int)((RedirectToActionResult)postSuccess).RouteValues!["id"]!;
+var savedApp = await db.AdmissionApplications.Include(a => a.Scores).SingleAsync(a => a.Id == appId);
+Check(savedApp.ApplicationCode.StartsWith("HS2027-"), "S3-04: Mã hồ sơ đúng định dạng HS{Năm}-{Số} (TC16)");
+Check(savedApp.StatusId == 1, "S3-04: Trạng thái ban đầu là Chờ tiếp nhận (TC17)");
+Check(savedApp.Scores.Single().Value == 28.5m, "S3-04: Điểm xét tuyển được lưu chính xác");
+
+// Snapshot bất biến: Sửa Profile không làm đổi Application (TC18)
+profileA.FullName = "Nguyễn Văn A (Tên Đã Đổi)";
+await db.SaveChangesAsync();
+var reloadedApp = await db.AdmissionApplications.AsNoTracking().SingleAsync(a => a.Id == appId);
+Check(reloadedApp.FullName == "Nguyễn Văn A", "S3-04: Snapshot bất biến độc lập với CandidateProfile (TC18)");
+
+// Chống nộp lặp (TC19)
+appCtrlA.ModelState.Clear();
+var postDup = (ViewResult)await appCtrlA.Create(new ApplicationFormInput
+{
+    RoundId = round.Id,
+    RoundMajorId = quota.Id,
+    RoundMajorMethodId = transcriptLink.Id,
+    Scores = { ["TongHocBa"] = "28.5" }
+}, CancellationToken.None);
+Check(!appCtrlA.ModelState.IsValid, "S3-04: Chống gửi lặp cùng nguyện vọng thành công (TC19)");
+
+// S3-05: Danh sách, Chi tiết và Chống IDOR (TC23, TC24, TC26, TC27)
+var listResA = (ViewResult)await appCtrlA.Index(null, null, CancellationToken.None);
+var listModelA = (ApplicationListViewModel)listResA.Model!;
+Check(listModelA.Applications.Count == 1 && listModelA.Applications[0].Id == appId,
+    "S3-05: Thí sinh A xem được danh sách hồ sơ của mình (TC24)");
+
+var detailsResA = (ViewResult)await appCtrlA.Details(appId, CancellationToken.None);
+Check(detailsResA.Model is AdmissionApplication, "S3-05: Thí sinh A xem được chi tiết hồ sơ snapshot (TC26)");
+
+// Thí sinh B truy cập hồ sơ của thí sinh A -> Bị chặn 404 (Chống IDOR)
+var appCtrlB = CreateAppController(testUserB);
+var idorRes = await appCtrlB.Details(appId, CancellationToken.None);
+Check(idorRes is NotFoundResult, "S3-05: Thí sinh B bị chặn 404 khi truy cập hồ sơ Thí sinh A - Chống IDOR thành công (TC27)");
+
+var listResB = (ViewResult)await appCtrlB.Index(null, null, CancellationToken.None);
+var listModelB = (ApplicationListViewModel)listResB.Model!;
+Check(listModelB.TotalCount == 0, "S3-05: Thí sinh B có danh sách rỗng độc lập (TC23)");
+
+// Kiểm tra Candidate/Index cập nhật số lượng hồ sơ thật (TC29)
+var candidateControllerA = new CandidateController(db)
+{
+    ControllerContext = new ControllerContext
+    {
+        HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity([
+                new Claim(ClaimTypes.NameIdentifier, testUserA.Id),
+                new Claim(ClaimTypes.GivenName, testUserA.FullName),
+                new Claim(ClaimTypes.Role, RoleNames.Candidate)
+            ], "test"))
+        }
+    }
+};
+var candHomeA = (CandidateHome)((ViewResult)await candidateControllerA.Index(round.Id, null)).Model!;
+Check(candHomeA.ApplicationCount == 1 && candHomeA.RecentApplications.Count == 1,
+    "S3-05: Cổng thí sinh Candidate/Index cập nhật số lượng hồ sơ thật (TC29)");
+
+Console.WriteLine($"\n====================================");
+Console.WriteLine($"TỔNG KẾT: {passed}/{passed} TẤT CẢ TEST CASES ĐÃ ĐẠT (PASS 100%)");
+Console.WriteLine($"Database kiểm thử: {database}");
+Console.WriteLine($"====================================\n");

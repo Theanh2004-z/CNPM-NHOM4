@@ -352,6 +352,65 @@ namespace TuyenSinhOnline.Data.Migrations
                     b.ToTable("ApplicationStatuses");
                 });
 
+            modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationStatusHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ChangedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<byte>("FromStatusId")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<byte>("ToStatusId")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("FromStatusId");
+
+                    b.HasIndex("ToStatusId");
+
+                    b.HasIndex("ApplicationId", "ChangedAt");
+
+                    b.ToTable("ApplicationStatusHistories");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationStatusTransition", b =>
+                {
+                    b.Property<byte>("FromStatusId")
+                        .HasColumnType("tinyint");
+
+                    b.Property<byte>("ToStatusId")
+                        .HasColumnType("tinyint");
+
+                    b.Property<bool>("RequiresNote")
+                        .HasColumnType("bit");
+
+                    b.HasKey("FromStatusId", "ToStatusId");
+
+                    b.HasIndex("ToStatusId");
+
+                    b.ToTable("ApplicationStatusTransitions");
+                });
+
             modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -677,6 +736,58 @@ namespace TuyenSinhOnline.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Application");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationStatusHistory", b =>
+                {
+                    b.HasOne("TuyenSinhOnline.Models.AdmissionApplication", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TuyenSinhOnline.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TuyenSinhOnline.Models.ApplicationStatus", "FromStatus")
+                        .WithMany()
+                        .HasForeignKey("FromStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TuyenSinhOnline.Models.ApplicationStatus", "ToStatus")
+                        .WithMany()
+                        .HasForeignKey("ToStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+
+                    b.Navigation("FromStatus");
+
+                    b.Navigation("ToStatus");
+                });
+
+            modelBuilder.Entity("TuyenSinhOnline.Models.ApplicationStatusTransition", b =>
+                {
+                    b.HasOne("TuyenSinhOnline.Models.ApplicationStatus", "FromStatus")
+                        .WithMany()
+                        .HasForeignKey("FromStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TuyenSinhOnline.Models.ApplicationStatus", "ToStatus")
+                        .WithMany()
+                        .HasForeignKey("ToStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FromStatus");
+
+                    b.Navigation("ToStatus");
                 });
 
             modelBuilder.Entity("TuyenSinhOnline.Models.CandidateEducation", b =>

@@ -13,6 +13,7 @@ public static class DatabaseInitializer
         var db = services.GetRequiredService<ApplicationDbContext>();
         if (applyMigrations) await db.Database.MigrateAsync();
         await EnsureStatusesAsync(db); // S3-01: bảo đảm có các trạng thái hồ sơ (chỉ thêm dòng còn thiếu)
+        await EnsureStatusTransitionsAsync(db); // S4-01: bảo đảm có các chuyển trạng thái hợp lệ
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var role in RoleNames.All)
         {
@@ -54,6 +55,25 @@ public static class DatabaseInitializer
         if (configuration.GetValue<bool>("DemoData:Enabled"))
             await Sprint3DemoData.SeedAsync(db);
     }
+    // S4-01: thêm các chuyển trạng thái còn thiếu; không sửa hay xóa dòng đã có.
+    private static async Task EnsureStatusTransitionsAsync(ApplicationDbContext db)
+    {
+        foreach (var rule in ApplicationWorkflowRules.Transitions)
+        {
+            var from = (byte)rule.From;
+            var to = (byte)rule.To;
+            var exists = await db.ApplicationStatusTransitions.AnyAsync(t => t.FromStatusId == from && t.ToStatusId == to);
+            if (!exists)
+                db.ApplicationStatusTransitions.Add(new ApplicationStatusTransition
+                {
+                    FromStatusId = from,
+                    ToStatusId = to,
+                    RequiresNote = rule.RequiresNote
+                });
+        }
+        await db.SaveChangesAsync();
+    }
+
     // Thêm các trạng thái hồ sơ còn thiếu; không sửa hay xóa dòng đã có (nhóm có thể đã nhập tay).
     private static async Task EnsureStatusesAsync(ApplicationDbContext db)
     {

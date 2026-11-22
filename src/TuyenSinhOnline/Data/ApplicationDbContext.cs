@@ -17,6 +17,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<CandidateEducation> CandidateEducations => Set<CandidateEducation>();
     public DbSet<AdmissionApplication> AdmissionApplications => Set<AdmissionApplication>();
     public DbSet<ApplicationScore> ApplicationScores => Set<ApplicationScore>();
+    public DbSet<ApplicationStatusTransition> ApplicationStatusTransitions => Set<ApplicationStatusTransition>();
+    public DbSet<ApplicationStatusHistory> ApplicationStatusHistories => Set<ApplicationStatusHistory>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -101,7 +103,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasIndex(s => s.Code).IsUnique();
         });
 
-        
+
 
         // ===== S3-01: hồ sơ đăng ký xét tuyển =====
         builder.Entity<AdmissionApplication>(entity =>
@@ -135,6 +137,36 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasOne(x => x.Application).WithMany(a => a.Scores)
                 .HasForeignKey(x => x.ApplicationId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ===== S4-01: chuyển trạng thái và lịch sử xử lý hồ sơ =====
+        builder.Entity<ApplicationStatusTransition>(entity =>
+        {
+            entity.HasKey(t => new { t.FromStatusId, t.ToStatusId });   // mỗi cặp (Từ, Đến) chỉ có một dòng
+            entity.HasOne(t => t.FromStatus).WithMany()
+                .HasForeignKey(t => t.FromStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(t => t.ToStatus).WithMany()
+                .HasForeignKey(t => t.ToStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<ApplicationStatusHistory>(entity =>
+        {
+            entity.Property(h => h.Note).HasMaxLength(500);
+            entity.HasIndex(h => new { h.ApplicationId, h.ChangedAt });   // xem lịch sử của một hồ sơ theo thời gian
+            entity.HasOne(h => h.Application).WithMany()
+                .HasForeignKey(h => h.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(h => h.FromStatus).WithMany()
+                .HasForeignKey(h => h.FromStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(h => h.ToStatus).WithMany()
+                .HasForeignKey(h => h.ToStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>().WithMany()
+                .HasForeignKey(h => h.ChangedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);   // không xóa được tài khoản cán bộ đã xử lý hồ sơ
         });
     }
 }

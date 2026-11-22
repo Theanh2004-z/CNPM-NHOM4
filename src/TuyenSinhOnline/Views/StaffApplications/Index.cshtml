@@ -24,6 +24,9 @@
             <h1>Hồ sơ xét tuyển</h1>
             <p>Tìm theo mã hồ sơ hoặc họ tên, lọc theo ngành và trạng thái, rồi mở chi tiết để xem hoặc xử lý hồ sơ.</p>
         </div>
+        <div>
+            <a class="button button-outline" asp-action="Statistics">Xem thống kê tuyển sinh →</a>
+        </div>
     </header>
 
     <form asp-action="Index" method="get" class="filter-bar">
@@ -37,7 +40,7 @@
                 <option value="">-- Tất cả ngành --</option>
                 @foreach (var major in Model.Majors)
                 {
-                    <option value="@major.Id" selected="@(major.Id == Model.MajorId)">@major.Code — @major.Name</option>
+                    <option value="@major.Id" selected="@(major.Id == Model.MajorId)">@major.Code — @major.Name@(major.IsActive ? "" : " (Ngừng hoạt động)")</option>
                 }
             </select>
         </label>

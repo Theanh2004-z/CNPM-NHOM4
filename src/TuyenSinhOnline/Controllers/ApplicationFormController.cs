@@ -351,6 +351,7 @@ public sealed class ApplicationFormController(ApplicationDbContext db, UserManag
         if (application is null) return NotFound();
 
         // S4-04: lịch sử cập nhật trạng thái cho thí sinh xem (không hiện tên cán bộ)
+        // CHỈ hiển thị Note khi chuyển sang NeedsSupplement hoặc Rejected; các bước khác ẩn hoàn toàn ghi chú nội bộ.
         ViewData["History"] = await db.ApplicationStatusHistories.AsNoTracking()
             .Where(h => h.ApplicationId == application.Id)
             .OrderBy(h => h.ChangedAt).ThenBy(h => h.Id)
@@ -359,7 +360,9 @@ public sealed class ApplicationFormController(ApplicationDbContext db, UserManag
                 FromStatus = h.FromStatus!.Name,
                 ToStatus = h.ToStatus!.Name,
                 ChangedAt = h.ChangedAt,
-                Note = h.Note
+                Note = (h.ToStatusId == (byte)ApplicationStatusEnum.NeedsSupplement || h.ToStatusId == (byte)ApplicationStatusEnum.Rejected)
+                    ? h.Note
+                    : null
             }).ToListAsync(ct);
 
         return View(application);

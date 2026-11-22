@@ -85,4 +85,216 @@ for (var i = 0; i < 9; i++) db.AdmissionRounds.Add(new AdmissionRound { Code = "
 await db.SaveChangesAsync(); summary = await Admin();
 Check(summary.RecentRounds.Count == 8 && summary.RecentRounds[0].Round.Code == "RECENT8"
     && summary.Rounds.Total == 11, "Danh sách quản trị giới hạn 8 đợt mới nhất nhưng tổng số vẫn đầy đủ");
+
+// ====================================================================
+// SPRINT 4: KIỂM THỬ TỰ ĐỘNG S4-02, S4-03, S4-05, S4-06
+// ====================================================================
+
+// 1. Seed trạng thái và quy tắc chuyển đổi trạng thái nếu chưa có
+foreach (var rule in ApplicationWorkflowRules.Transitions)
+{
+    var fromStatus = (byte)rule.From;
+    var toStatus = (byte)rule.To;
+    if (!await db.ApplicationStatusTransitions.AnyAsync(t => t.FromStatusId == fromStatus && t.ToStatusId == toStatus))
+    {
+        db.ApplicationStatusTransitions.Add(new ApplicationStatusTransition
+        {
+            FromStatusId = fromStatus,
+            ToStatusId = toStatus,
+            RequiresNote = rule.RequiresNote
+        });
+    }
+}
+var wantedStatuses = new[]
+{
+    (Id: (byte)1, Code: "Pending", Name: "Chờ tiếp nhận"),
+    (Id: (byte)2, Code: "InReview", Name: "Đang xét duyệt"),
+    (Id: (byte)3, Code: "NeedsSupplement", Name: "Cần bổ sung"),
+    (Id: (byte)4, Code: "Approved", Name: "Đã duyệt"),
+    (Id: (byte)5, Code: "Rejected", Name: "Từ chối")
+};
+foreach (var s in wantedStatuses)
+{
+    if (!await db.ApplicationStatuses.AnyAsync(x => x.Id == s.Id))
+        db.ApplicationStatuses.Add(new ApplicationStatus { Id = s.Id, Code = s.Code, Name = s.Name });
+}
+await db.SaveChangesAsync();
+
+// 2. Tạo tài khoản Thí sinh, Cán bộ và Quản trị viên
+var testCandidate = new ApplicationUser
+{
+    Id = Guid.NewGuid().ToString(),
+    UserName = "candidate.stafftest@example.com",
+    Email = "candidate.stafftest@example.com",
+    FullName = "Nguyễn Văn Thí Sinh Test"
+};
+var testOfficer = new ApplicationUser
+{
+    Id = Guid.NewGuid().ToString(),
+    UserName = "officer.stafftest@example.com",
+    Email = "officer.stafftest@example.com",
+    FullName = "Trần Cán Bộ Tuyển Sinh"
+};
+var testAdmin = new ApplicationUser
+{
+    Id = Guid.NewGuid().ToString(),
+    UserName = "admin.stafftest@example.com",
+    Email = "admin.stafftest@example.com",
+    FullName = "Lê Quản Trị Hệ Thống"
+};
+db.Users.AddRange(testCandidate, testOfficer, testAdmin);
+round.IsActive = true;
+await db.SaveChangesAsync();
+
+// 3. Tạo hồ sơ xét tuyển mẫu ở trạng thái Pending (1)
+var app1 = new AdmissionApplication
+{
+    UserId = testCandidate.Id,
+    RoundMajorMethodId = link.Id,
+    ApplicationCode = "HS2027-999001",
+    FullName = testCandidate.FullName,
+    DateOfBirth = new DateOnly(2008, 1, 1),
+    PhoneNumber = "0912345678",
+    ContactEmail = testCandidate.Email,
+    SchoolName = "THPT Chuyên Test",
+    GraduationYear = 2026,
+    StatusId = (byte)ApplicationStatusEnum.Pending,
+    SubmittedAt = AdmissionClock.Now
+};
+db.AdmissionApplications.Add(app1);
+await db.SaveChangesAsync();
+
+var staffCtrl = new StaffApplicationsController(db)
+{
+    ControllerContext = new ControllerContext
+    {
+        HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity([
+                new Claim(ClaimTypes.NameIdentifier, testOfficer.Id),
+                new Claim(ClaimTypes.GivenName, testOfficer.FullName),
+                new Claim(ClaimTypes.Role, RoleNames.AdmissionsOfficer)
+            ], "test"))
+        }
+    }
+};
+
+// S4-02: Tra cứu & Lọc hồ sơ
+var searchByCode = (StaffApplicationListViewModel)((ViewResult)await staffCtrl.Index("999001", null, null)).Model!;
+Check(searchByCode.Items.Count == 1 && searchByCode.Items[0].Id == app1.Id,
+    "S4-02: Tìm kiếm chính xác theo mã hồ sơ thành công");
+
+var searchByName = (StaffApplicationListViewModel)((ViewResult)await staffCtrl.Index("Thí Sinh Test", null, null)).Model!;
+Check(searchByName.Items.Count == 1 && searchByName.Items[0].Id == app1.Id,
+    "S4-02: Tìm kiếm theo họ tên thí sinh thành công");
+
+var filterByMajor = (StaffApplicationListViewModel)((ViewResult)await staffCtrl.Index(null, it.Id, null)).Model!;
+Check(filterByMajor.Items.Count == 1, "S4-02: Lọc theo ngành có hồ sơ thành công");
+
+var filterByOtherMajor = (StaffApplicationListViewModel)((ViewResult)await staffCtrl.Index(null, english.Id, null)).Model!;
+Check(filterByOtherMajor.Items.Count == 0, "S4-02: Lọc ngành chưa có hồ sơ trả về danh sách rỗng");
+
+var filterByStatus = (StaffApplicationListViewModel)((ViewResult)await staffCtrl.Index(null, null, (byte)ApplicationStatusEnum.Pending)).Model!;
+Check(filterByStatus.Items.Count == 1, "S4-02: Lọc theo trạng thái Chờ tiếp nhận thành công");
+
+var filterCombine = (StaffApplicationListViewModel)((ViewResult)await staffCtrl.Index("999001", it.Id, (byte)ApplicationStatusEnum.Pending)).Model!;
+Check(filterCombine.Items.Count == 1 && filterCombine.Search == "999001" && filterCombine.MajorId == it.Id && filterCombine.StatusId == 1,
+    "S4-02: Kết hợp tìm kiếm + lọc bảo toàn đầy đủ các điều kiện");
+
+// Dropdown ngành giữ nguyên cả ngành ngừng hoạt động
+Check(searchByCode.Majors.Any(m => m.Id == english.Id),
+    "S4-02: Dropdown ngành giữ nguyên tất cả ngành để cán bộ tra cứu hồ sơ cũ");
+
+// S4-03: Kiểm thử máy trạng thái và chuyển trạng thái
+// 1. Chặn chuyển sai quy trình: Pending -> Approved bị từ chối
+var invalidJump = await ApplicationWorkflow.ChangeStatusAsync(db, app1.Id, ApplicationStatusEnum.Approved, testOfficer.Id, null);
+Check(!invalidJump.Ok, "S4-03: Chặn chuyển trạng thái sai quy trình (Pending -> Approved bị từ chối)");
+
+// 2. Chuyển hợp lệ: Pending -> InReview
+var step1 = await ApplicationWorkflow.ChangeStatusAsync(db, app1.Id, ApplicationStatusEnum.InReview, testOfficer.Id, null);
+Check(step1.Ok, "S4-03: Chuyển hợp lệ Pending -> InReview thành công");
+
+// 3. Chặn thiếu lý do khi yêu cầu bổ sung: InReview -> NeedsSupplement với note rỗng
+var emptyNoteStep = await ApplicationWorkflow.ChangeStatusAsync(db, app1.Id, ApplicationStatusEnum.NeedsSupplement, testOfficer.Id, "   ");
+Check(!emptyNoteStep.Ok, "S4-03: Bắt buộc nhập lý do khi Yêu cầu bổ sung (note rỗng bị từ chối)");
+
+// 4. Chuyển hợp lệ: InReview -> NeedsSupplement kèm lý do công khai
+var step2 = await ApplicationWorkflow.ChangeStatusAsync(db, app1.Id, ApplicationStatusEnum.NeedsSupplement, testOfficer.Id, "Bổ sung bản photo công chứng CCCD");
+Check(step2.Ok, "S4-03: Yêu cầu bổ sung kèm lý do thành công");
+
+// 5. Chuyển hợp lệ: NeedsSupplement -> InReview kèm ghi chú nội bộ
+var step3 = await ApplicationWorkflow.ChangeStatusAsync(db, app1.Id, ApplicationStatusEnum.InReview, testOfficer.Id, "Ghi chú nội bộ: Đã nhận bổ sung qua bưu điện");
+Check(step3.Ok, "S4-03: Xác nhận nhận bổ sung quay lại xét duyệt thành công");
+
+// 6. Chuyển hợp lệ: InReview -> Approved kèm ghi chú nội bộ
+var step4 = await ApplicationWorkflow.ChangeStatusAsync(db, app1.Id, ApplicationStatusEnum.Approved, testOfficer.Id, "Ghi chú nội bộ: Đạt điểm xét tuyển");
+Check(step4.Ok, "S4-03: Duyệt hồ sơ thành công");
+
+// 7. Kiểm tra lịch sử lưu đủ 4 bản ghi theo thứ tự thời gian, không ghi đè
+var histories = await db.ApplicationStatusHistories.Where(h => h.ApplicationId == app1.Id).OrderBy(h => h.ChangedAt).ToListAsync();
+Check(histories.Count == 4, "S4-03: Lưu đủ toàn bộ 4 bản ghi lịch sử, không ghi đè bản ghi cũ");
+
+// 8. Chống ghi đè concurrency: kiểm tra expectedStatusId
+var staleChange = await ApplicationWorkflow.ChangeStatusAsync(db, app1.Id, ApplicationStatusEnum.InReview, testOfficer.Id, "Test", expectedFromStatusId: (byte)ApplicationStatusEnum.Pending);
+Check(!staleChange.Ok, "S4-03: Chống ghi đè khi trạng thái mong đợi bị lệch (Concurrency check)");
+
+// Phân quyền chi tiết cán bộ vs quản trị viên
+var officerDetails = (StaffApplicationDetailViewModel)((ViewResult)await staffCtrl.Details(app1.Id)).Model!;
+Check(officerDetails.CanProcess == true, "S4-02: Cán bộ tuyển sinh có quyền xử lý hồ sơ (CanProcess == true)");
+
+var adminStaffCtrl = new StaffApplicationsController(db)
+{
+    ControllerContext = new ControllerContext
+    {
+        HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity([
+                new Claim(ClaimTypes.NameIdentifier, testAdmin.Id),
+                new Claim(ClaimTypes.GivenName, testAdmin.FullName),
+                new Claim(ClaimTypes.Role, RoleNames.Administrator)
+            ], "test"))
+        }
+    }
+};
+var adminDetails = (StaffApplicationDetailViewModel)((ViewResult)await adminStaffCtrl.Details(app1.Id)).Model!;
+Check(adminDetails.CanProcess == false, "S4-02: Quản trị viên chỉ có quyền xem chi tiết (CanProcess == false)");
+
+// ====================================================================
+// SPRINT 4 (S4-05 & S4-06): THỐNG KÊ TUYỂN SINH
+// ====================================================================
+
+// S4-05: Thống kê chính xác chống đếm trùng (1 hồ sơ có 4 lịch sử chỉ đếm là 1)
+var statsRound1 = (StaffStatisticsViewModel)((ViewResult)await staffCtrl.Statistics(round.Id)).Model!;
+Check(statsRound1.TotalApplications == 1,
+    "S4-05: Chống đếm trùng tuyệt đối: Hồ sơ có 4 bản ghi lịch sử chỉ được tính là ĐÚNG 1 hồ sơ");
+
+Check(statsRound1.MajorRows.Count == 1 && statsRound1.MajorRows[0].Count == 1 && statsRound1.MajorRows[0].Percentage == 100.0,
+    "S4-05: Thống kê theo ngành chính xác 100%");
+
+Check(statsRound1.MethodRows.Count == 1 && statsRound1.MethodRows[0].Count == 1 && statsRound1.MethodRows[0].Percentage == 100.0,
+    "S4-05: Thống kê theo phương thức chính xác 100%");
+
+// Luôn hiển thị đủ 5 trạng thái gốc
+Check(statsRound1.StatusRows.Count == 5,
+    "S4-05: Bảng trạng thái luôn hiển thị đủ 5 trạng thái kể cả khi số lượng = 0");
+
+var approvedStat = statsRound1.StatusRows.Single(s => s.StatusId == (byte)ApplicationStatusEnum.Approved);
+Check(approvedStat.Count == 1 && approvedStat.Percentage == 100.0,
+    "S4-05: Trạng thái Đã duyệt đếm đúng 1 hồ sơ (100%)");
+
+var pendingStat = statsRound1.StatusRows.Single(s => s.StatusId == (byte)ApplicationStatusEnum.Pending);
+Check(pendingStat.Count == 0 && pendingStat.Percentage == 0.0,
+    "S4-05: Trạng thái Chờ tiếp nhận hiển thị đúng 0 hồ sơ (0%) không bị mất dòng");
+
+// Đổi sang đợt 2 (đợt 0 hồ sơ) an toàn không chia cho 0
+var statsRound2 = (StaffStatisticsViewModel)((ViewResult)await staffCtrl.Statistics(next.Id)).Model!;
+Check(statsRound2.TotalApplications == 0 && statsRound2.MajorRows.Count == 0 && statsRound2.MethodRows.Count == 0,
+    "S4-05: Đổi sang đợt 0 hồ sơ trả về số lượng 0 an toàn không lỗi chia cho 0");
+Check(statsRound2.StatusRows.Count == 5 && statsRound2.StatusRows.All(s => s.Count == 0 && s.Percentage == 0.0),
+    "S4-05: Đợt 0 hồ sơ vẫn hiển thị đủ 5 trạng thái đều bằng 0");
+
+// Quản trị viên cũng mở được trang Thống kê
+var adminStats = (StaffStatisticsViewModel)((ViewResult)await adminStaffCtrl.Statistics(round.Id)).Model!;
+Check(adminStats.TotalApplications == 1,
+    "S4-06: Quản trị viên truy cập và xem được số liệu Thống kê tuyển sinh");
 Console.WriteLine($"{passed}/{passed} PASS"); Console.WriteLine("Database thử: " + database);

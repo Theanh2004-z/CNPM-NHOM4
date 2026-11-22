@@ -134,4 +134,117 @@ public class StaffApplicationsController(ApplicationDbContext db) : Controller
         else TempData["StaffError"] = error;
         return RedirectToAction(nameof(Details), new { id });
     }
+
+    // ----- S4-05, S4-06: Thống kê tuyển sinh (Cán bộ tuyển sinh & Quản trị viên) -----
+    [HttpGet]
+    public async Task<IActionResult> Statistics(int? roundId, CancellationToken ct = default)
+    {
+        var rounds = await db.AdmissionRounds.AsNoTracking()
+            .OrderByDescending(r => r.AdmissionYear)
+            .ThenByDescending(r => r.StartAt)
+            .ToListAsync(ct);
+
+        var query = db.AdmissionApplications.AsNoTracking().AsQueryable();
+        if (roundId.HasValue)
+        {
+            query = query.Where(a => a.RoundMajorMethod!.RoundMajor!.RoundId == roundId.Value);
+        }
+
+        // S4-05: Tổng số hồ sơ - truy vấn trực tiếp trên AdmissionApplications (tuyệt đối không JOIN bảng lịch sử)
+        var total = await query.CountAsync(ct);
+
+        // 1. Thống kê theo Ngành
+        var majorGroup = await query
+            .GroupBy(a => new
+            {
+                Code = a.RoundMajorMethod!.RoundMajor!.Major!.Code,
+                Name = a.RoundMajorMethod.RoundMajor.Major.Name
+            })
+            .Select(g => new
+            {
+                g.Key.Code,
+                g.Key.Name,
+                Count = g.Count()
+            })
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Code)
+            .ToListAsync(ct);
+
+        var majorRows = majorGroup.Select(x => new StatisticRow
+        {
+            Code = x.Code,
+            Name = x.Name,
+            Count = x.Count,
+            Percentage = total > 0 ? Math.Round((double)x.Count / total * 100.0, 1) : 0
+        }).ToList();
+
+        // 2. Thống kê theo Phương thức xét tuyển
+        var methodGroup = await query
+            .GroupBy(a => new
+            {
+                Code = a.RoundMajorMethod!.Method!.Code,
+                Name = a.RoundMajorMethod.Method.Name
+            })
+            .Select(g => new
+            {
+                g.Key.Code,
+                g.Key.Name,
+                Count = g.Count()
+            })
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Code)
+            .ToListAsync(ct);
+
+        var methodRows = methodGroup.Select(x => new StatisticRow
+        {
+            Code = x.Code,
+            Name = x.Name,
+            Count = x.Count,
+            Percentage = total > 0 ? Math.Round((double)x.Count / total * 100.0, 1) : 0
+        }).ToList();
+
+        // 3. Thống kê theo Trạng thái (lấy đủ 5 trạng thái gốc từ db.ApplicationStatuses, không bị mất dòng)
+        var allStatuses = await db.ApplicationStatuses.AsNoTracking()
+            .OrderBy(s => s.Id)
+            .ToListAsync(ct);
+
+        var statusCounts = await query
+            .GroupBy(a => a.StatusId)
+            .Select(g => new { StatusId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.StatusId, x => x.Count, ct);
+
+        string BadgeClass(byte id) => id switch
+        {
+            1 => "st-pending",
+            2 => "st-review",
+            3 => "st-supplement",
+            4 => "st-approved",
+            5 => "st-rejected",
+            _ => "st-pending"
+        };
+
+        var statusRows = allStatuses.Select(s =>
+        {
+            var count = statusCounts.GetValueOrDefault(s.Id, 0);
+            return new StatusStatisticRow
+            {
+                StatusId = s.Id,
+                StatusCode = s.Code,
+                StatusName = s.Name,
+                Count = count,
+                Percentage = total > 0 ? Math.Round((double)count / total * 100.0, 1) : 0,
+                BadgeClass = BadgeClass(s.Id)
+            };
+        }).ToList();
+
+        return View(new StaffStatisticsViewModel
+        {
+            RoundId = roundId,
+            Rounds = rounds,
+            TotalApplications = total,
+            MajorRows = majorRows,
+            MethodRows = methodRows,
+            StatusRows = statusRows
+        });
+    }
 }

@@ -103,7 +103,7 @@
             }
             else
             {
-                <form asp-action="ChangeStatus" method="post">
+                <form id="processForm" asp-action="ChangeStatus" method="post">
                     <input type="hidden" name="id" value="@a.Id" />
                     <input type="hidden" name="expectedStatusId" value="@a.StatusId" />
                     <div class="form-field">
@@ -111,7 +111,7 @@
                         <select id="toStatusId" name="toStatusId">
                             @foreach (var option in Model.Transitions)
                             {
-                                <option value="@option.ToStatusId">@option.ToStatusName@(option.RequiresNote ? " (bắt buộc ghi chú)" : "")</option>
+                                <option value="@option.ToStatusId" data-requires-note="@(option.RequiresNote ? "true" : "false")">@option.ToStatusName@(option.RequiresNote ? " (bắt buộc ghi chú)" : "")</option>
                             }
                         </select>
                     </div>
@@ -119,8 +119,9 @@
                         <label for="note">Ghi chú / lý do</label>
                         <textarea id="note" name="note" rows="3" maxlength="500"></textarea>
                         <p class="field-hint">Bắt buộc khi yêu cầu bổ sung, từ chối, hoặc xác nhận đã nhận bổ sung. Tối đa 500 ký tự.</p>
+                        <p class="field-hint" style="color:var(--ink-light);margin-top:4px;"><em>Lưu ý: Ghi chú ở bước "Yêu cầu bổ sung" và "Từ chối" sẽ hiển thị cho thí sinh. Các bước chuyển khác chỉ lưu nội bộ phục vụ công tác xét tuyển.</em></p>
                     </div>
-                    <button type="submit" class="button button-primary">Cập nhật trạng thái</button>
+                    <button type="submit" id="btnSubmitStatus" class="button button-primary">Cập nhật trạng thái</button>
                 </form>
             }
         </section>
@@ -160,3 +161,30 @@
         </div>
     </section>
 </div>
+
+@section Scripts
+{
+    <script>
+        (function () {
+            var form = document.getElementById('processForm');
+            if (!form) return;
+            form.addEventListener('submit', function (e) {
+                var select = document.getElementById('toStatusId');
+                var selectedOpt = select ? select.options[select.selectedIndex] : null;
+                var reqNote = selectedOpt && selectedOpt.dataset.requiresNote === 'true';
+                var noteInput = document.getElementById('note');
+                if (reqNote && (!noteInput.value || !noteInput.value.trim())) {
+                    e.preventDefault();
+                    noteInput.focus();
+                    alert('Vui lòng nhập ghi chú / lý do cho thao tác này.');
+                    return;
+                }
+                var btn = document.getElementById('btnSubmitStatus');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Đang xử lý...';
+                }
+            });
+        })();
+    </script>
+}

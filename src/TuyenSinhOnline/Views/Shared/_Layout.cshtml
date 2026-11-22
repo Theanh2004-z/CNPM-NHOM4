@@ -3,6 +3,7 @@
     var signedIn = User.Identity?.IsAuthenticated == true;
     var fullName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity?.Name ?? "Tài khoản";
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
     var workspaceLabel = User.IsInRole(TuyenSinhOnline.Security.RoleNames.Administrator) ? "Không gian quản trị"
         : User.IsInRole(TuyenSinhOnline.Security.RoleNames.AdmissionsOfficer) ? "Không gian cán bộ" : "Cổng thí sinh";
 }
@@ -38,7 +39,8 @@
                         { <a class="nav-link" asp-controller="AdmissionRounds" asp-action="Index">Quản lý tuyển sinh</a> }
                         @if (User.IsInRole(TuyenSinhOnline.Security.RoleNames.AdmissionsOfficer) || User.IsInRole(TuyenSinhOnline.Security.RoleNames.Administrator))
                         {
-                            <a class="nav-link @(currentController == "StaffApplications" ? "is-active" : "")" asp-controller="StaffApplications" asp-action="Index">Hồ sơ xét tuyển</a>
+                            <a class="nav-link @(currentController == "StaffApplications" && currentAction != "Statistics" ? "is-active" : "")" asp-controller="StaffApplications" asp-action="Index">Hồ sơ xét tuyển</a>
+                            <a class="nav-link @(currentController == "StaffApplications" && currentAction == "Statistics" ? "is-active" : "")" asp-controller="StaffApplications" asp-action="Statistics">Thống kê tuyển sinh</a>
                         }
                     }
                 </div>
@@ -58,7 +60,7 @@
         </nav>
     </header>
     <main id="main-content" tabindex="-1">@RenderBody()</main>
-    <footer class="site-footer"><div class="shell footer-content"><div><strong>TuyenSinhOnline</strong><span>Đồ án Công nghệ phần mềm · Sprint 3</span></div><a asp-controller="Home" asp-action="Privacy">Thông tin &amp; quyền riêng tư <span aria-hidden="true">↗</span></a></div></footer>
+    <footer class="site-footer"><div class="shell footer-content"><div><strong>TuyenSinhOnline</strong><span>Đồ án Công nghệ phần mềm · Sprint 4 (Hoàn thành)</span></div><a asp-controller="Home" asp-action="Privacy">Thông tin &amp; quyền riêng tư <span aria-hidden="true">↗</span></a></div></footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

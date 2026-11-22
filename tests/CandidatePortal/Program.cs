@@ -282,6 +282,60 @@ var candHomeA = (CandidateHome)((ViewResult)await candidateControllerA.Index(rou
 Check(candHomeA.ApplicationCount == 1 && candHomeA.RecentApplications.Count == 1,
     "S3-05: Cổng thí sinh Candidate/Index cập nhật số lượng hồ sơ thật (TC29)");
 
+// ====================================================================
+// SPRINT 4 (S4-04): KIỂM TRA HIỂN THỊ TRẠNG THÁI MỚI & ẨN GHI CHÚ NỘI BỘ
+// ====================================================================
+
+// Tạo tài khoản cán bộ tuyển sinh trong AspNetUsers để thỏa mãn ràng buộc khóa ngoại ChangedByUserId
+var officerUser = new ApplicationUser
+{
+    Id = Guid.NewGuid().ToString(),
+    UserName = "officer.test@example.com",
+    NormalizedUserName = "OFFICER.TEST@EXAMPLE.COM",
+    Email = "officer.test@example.com",
+    NormalizedEmail = "OFFICER.TEST@EXAMPLE.COM",
+    FullName = "Cán bộ Tuyển sinh Test"
+};
+db.Users.Add(officerUser);
+await db.SaveChangesAsync();
+
+// Giả lập Cán bộ tuyển sinh xử lý hồ sơ qua chuỗi máy trạng thái 5 bước
+var officerUserId = officerUser.Id;
+await ApplicationWorkflow.ChangeStatusAsync(db, appId, ApplicationStatusEnum.InReview, officerUserId, null);
+await ApplicationWorkflow.ChangeStatusAsync(db, appId, ApplicationStatusEnum.NeedsSupplement, officerUserId, "Thiếu bản sao học bạ công chứng");
+await ApplicationWorkflow.ChangeStatusAsync(db, appId, ApplicationStatusEnum.InReview, officerUserId, "Ghi chú nội bộ: Đã nhận đủ bổ sung qua bưu điện");
+await ApplicationWorkflow.ChangeStatusAsync(db, appId, ApplicationStatusEnum.Approved, officerUserId, "Ghi chú nội bộ: Đạt điểm xét tuyển ngành CNTT");
+
+// Thí sinh A mở chi tiết hồ sơ sau khi được duyệt
+var detailsAfterReview = (ViewResult)await appCtrlA.Details(appId, CancellationToken.None);
+var appAfterReview = (AdmissionApplication)detailsAfterReview.Model!;
+Check(appAfterReview.StatusId == (byte)ApplicationStatusEnum.Approved,
+    "S4-04: Thí sinh xem được trạng thái mới nhất 'Đã duyệt' sau khi cán bộ xử lý");
+
+var candHistory = (List<CandidateHistoryRow>)detailsAfterReview.ViewData["History"]!;
+Check(candHistory.Count == 4, "S4-04: Thí sinh thấy đủ 4 mốc lịch sử thay đổi trạng thái");
+
+// Mốc 1: Pending -> InReview: Note phải là null
+Check(candHistory[0].ToStatus == "Đang xét duyệt" && candHistory[0].Note == null,
+    "S4-04: Bước InReview ban đầu không lộ ghi chú (Note == null)");
+
+// Mốc 2: InReview -> NeedsSupplement: Thí sinh PHẢI thấy lý do
+Check(candHistory[1].ToStatus == "Cần bổ sung" && candHistory[1].Note == "Thiếu bản sao học bạ công chứng",
+    "S4-04: Thí sinh thấy rõ lý do công khai khi được yêu cầu bổ sung");
+
+// Mốc 3: NeedsSupplement -> InReview: Ghi chú nội bộ của cán bộ TUYỆT ĐỐI BỊ ẨN
+Check(candHistory[2].ToStatus == "Đang xét duyệt" && candHistory[2].Note == null,
+    "S4-04: Tuyệt đối KHÔNG lộ ghi chú nội bộ khi xác nhận nhận bổ sung (Note == null)");
+
+// Mốc 4: InReview -> Approved: Ghi chú nội bộ khi duyệt TUYỆT ĐỐI BỊ ẨN
+Check(candHistory[3].ToStatus == "Đã duyệt" && candHistory[3].Note == null,
+    "S4-04: Tuyệt đối KHÔNG lộ ghi chú nội bộ khi duyệt hồ sơ (Note == null)");
+
+// Kiểm tra bảo vệ IDOR vẫn hoạt động tuyệt đối sau khi duyệt
+var idorAfterReview = await appCtrlB.Details(appId, CancellationToken.None);
+Check(idorAfterReview is NotFoundResult,
+    "S4-04: Thí sinh B vẫn bị chặn 404 khi truy cập hồ sơ Thí sinh A sau khi đã duyệt");
+
 Console.WriteLine($"\n====================================");
 Console.WriteLine($"TỔNG KẾT: {passed}/{passed} TẤT CẢ TEST CASES ĐÃ ĐẠT (PASS 100%)");
 Console.WriteLine($"Database kiểm thử: {database}");

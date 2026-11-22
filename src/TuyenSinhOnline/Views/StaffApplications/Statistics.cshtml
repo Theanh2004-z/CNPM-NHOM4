@@ -1,0 +1,281 @@
+@using System.Globalization
+@model StaffStatisticsViewModel
+@{
+    ViewData["Title"] = "Thống kê tuyển sinh";
+    var selectedRound = Model.Rounds.FirstOrDefault(r => r.Id == Model.RoundId);
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/staff-workspaces.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/staff-applications.css" asp-append-version="true" />
+    <style>
+        .stats-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-block: 20px;
+        }
+
+        .stats-kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+            .stats-kpi-card .label {
+                font-size: 0.85rem;
+                color: #64748b;
+                font-weight: 500;
+            }
+
+            .stats-kpi-card .value {
+                font-size: 1.85rem;
+                font-weight: 700;
+                color: #0f172a;
+                line-height: 1.2;
+            }
+
+            .stats-kpi-card .subtext {
+                font-size: 0.8rem;
+                color: #94a3b8;
+            }
+
+        .stats-table-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        @@media (min-width: 900px) {
+            .stats-table-grid.two-col {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .progress-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 140px;
+        }
+
+        .progress-bar-track {
+            flex: 1;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #0284c7;
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-bar-pct {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+            width: 44px;
+            text-align: right;
+        }
+
+        .empty-hint {
+            color: #64748b;
+            font-style: italic;
+            padding: 18px;
+            text-align: center;
+        }
+    </style>
+}
+
+<div class="shell management-page">
+    <header class="management-heading">
+        <div>
+            <span class="eyebrow">KHU VỰC CÁN BỘ & QUẢN TRỊ</span>
+            <h1>Thống kê tuyển sinh</h1>
+            <p>Số liệu tổng hợp hồ sơ đăng ký theo từng đợt, phân loại chi tiết theo ngành, phương thức và trạng thái xử lý.</p>
+        </div>
+    </header>
+
+    @* Bộ lọc theo Đợt tuyển sinh *@
+    <form asp-action="Statistics" method="get" class="filter-bar" style="margin-top:16px;">
+        <label for="roundId" style="flex:1;max-width:400px;">
+            Đợt tuyển sinh
+            <select id="roundId" name="roundId">
+                <option value="">-- Tất cả các đợt tuyển sinh --</option>
+                @foreach (var round in Model.Rounds)
+                {
+                    <option value="@round.Id" selected="@(round.Id == Model.RoundId)">@round.Name (@round.Code) · Năm @round.AdmissionYear</option>
+                }
+            </select>
+        </label>
+        <button type="submit" class="button button-primary">Lọc số liệu</button>
+        @if (Model.RoundId.HasValue)
+        {
+            <a class="text-link" asp-action="Statistics">Xem tất cả các đợt <span aria-hidden="true">×</span></a>
+        }
+    </form>
+
+    @* Thông tin phạm vi số liệu *@
+    <div style="margin-top:16px;">
+        <p style="font-size:0.92rem;color:#475569;">
+            Phạm vi hiển thị: <strong>@(selectedRound != null ? $"{selectedRound.Name} ({selectedRound.Code})" : "Toàn bộ các đợt tuyển sinh")</strong>
+        </p>
+    </div>
+
+    @* Các thẻ KPI Tổng quan *@
+    <div class="stats-kpi-grid">
+        <div class="stats-kpi-card" style="border-left: 4px solid #0284c7;">
+            <span class="label">Tổng số hồ sơ</span>
+            <span class="value">@Model.TotalApplications</span>
+            <span class="subtext">1 hồ sơ = 1 đơn vị tính</span>
+        </div>
+        @foreach (var status in Model.StatusRows)
+        {
+            <div class="stats-kpi-card">
+                <span class="label"><span class="st-badge @status.BadgeClass" style="font-size:0.75rem;">@status.StatusName</span></span>
+                <span class="value">@status.Count</span>
+                <span class="subtext">@status.Percentage% tổng số</span>
+            </div>
+        }
+    </div>
+
+    @* 3 Bảng thống kê chi tiết *@
+    <div class="stats-table-grid">
+        @* Bảng 1: Theo Trạng thái hồ sơ (Luôn hiển thị đủ 5 dòng) *@
+        <section class="panel wide">
+            <h2>Thống kê theo trạng thái hồ sơ</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Trạng thái hồ sơ</th>
+                            <th style="text-align:right;">Số lượng</th>
+                            <th style="text-align:right;">Tỷ lệ %</th>
+                            <th style="min-width:180px;">Biểu đồ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.StatusRows)
+                        {
+                            <tr>
+                                <td><code>@row.StatusCode</code></td>
+                                <td><span class="st-badge @row.BadgeClass">@row.StatusName</span></td>
+                                <td style="text-align:right;"><strong>@row.Count</strong></td>
+                                <td style="text-align:right;">@row.Percentage%</td>
+                                <td>
+                                    <div class="progress-bar-wrap">
+                                        <div class="progress-bar-track">
+                                            <div class="progress-bar-fill" style="width: @(row.Percentage.ToString("0.##", CultureInfo.InvariantCulture))%;"></div>
+                                        </div>
+                                        <span class="progress-bar-pct">@row.Percentage%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div class="stats-table-grid two-col">
+        @* Bảng 2: Theo Ngành *@
+        <section class="panel">
+            <h2>Hồ sơ theo ngành xét tuyển</h2>
+            @if (Model.MajorRows.Count == 0)
+            {
+                <p class="empty-hint">Chưa có hồ sơ nào nộp vào ngành trong đợt này.</p>
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã ngành</th>
+                                <th>Tên ngành</th>
+                                <th style="text-align:right;">Số hồ sơ</th>
+                                <th style="text-align:right;">Tỷ lệ %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.MajorRows)
+                            {
+                                <tr>
+                                    <td><code>@row.Code</code></td>
+                                    <td><strong>@row.Name</strong></td>
+                                    <td style="text-align:right;"><strong>@row.Count</strong></td>
+                                    <td style="text-align:right;">
+                                        <div class="progress-bar-wrap" style="justify-content:flex-end;">
+                                            <div class="progress-bar-track" style="max-width:80px;">
+                                                <div class="progress-bar-fill" style="width: @(row.Percentage.ToString("0.##", CultureInfo.InvariantCulture))%;"></div>
+                                            </div>
+                                            <span class="progress-bar-pct">@row.Percentage%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        @* Bảng 3: Theo Phương thức xét tuyển *@
+        <section class="panel">
+            <h2>Hồ sơ theo phương thức</h2>
+            @if (Model.MethodRows.Count == 0)
+            {
+                <p class="empty-hint">Chưa có hồ sơ nào theo phương thức trong đợt này.</p>
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã PT</th>
+                                <th>Tên phương thức</th>
+                                <th style="text-align:right;">Số hồ sơ</th>
+                                <th style="text-align:right;">Tỷ lệ %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.MethodRows)
+                            {
+                                <tr>
+                                    <td><code>@row.Code</code></td>
+                                    <td><strong>@row.Name</strong></td>
+                                    <td style="text-align:right;"><strong>@row.Count</strong></td>
+                                    <td style="text-align:right;">
+                                        <div class="progress-bar-wrap" style="justify-content:flex-end;">
+                                            <div class="progress-bar-track" style="max-width:80px;">
+                                                <div class="progress-bar-fill" style="width: @(row.Percentage.ToString("0.##", CultureInfo.InvariantCulture))%;"></div>
+                                            </div>
+                                            <span class="progress-bar-pct">@row.Percentage%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+
+    <div style="margin-top:28px;">
+        <a class="button button-outline" asp-action="Index">← Về danh sách hồ sơ</a>
+    </div>
+</div>

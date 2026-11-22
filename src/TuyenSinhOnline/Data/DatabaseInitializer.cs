@@ -51,9 +51,9 @@ public static class DatabaseInitializer
             EnsureSuccess(await userManager.AddToRoleAsync(user, account.Role));
             await transaction.CommitAsync();
         }
-        // S3-01: hồ sơ đăng ký mẫu (chỉ chạy khi bật DemoData và đã có tài khoản demo)
+        // S4: Dữ liệu mẫu hoàn chỉnh cho Sprint 4 (chỉ chạy khi bật DemoData và đã có tài khoản demo)
         if (configuration.GetValue<bool>("DemoData:Enabled"))
-            await Sprint3DemoData.SeedAsync(db);
+            await Sprint4DemoData.SeedAsync(db);
     }
     // S4-01: thêm các chuyển trạng thái còn thiếu; không sửa hay xóa dòng đã có.
     private static async Task EnsureStatusTransitionsAsync(ApplicationDbContext db)

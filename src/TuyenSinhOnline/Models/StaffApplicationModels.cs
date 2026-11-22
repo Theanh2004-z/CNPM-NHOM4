@@ -58,3 +58,36 @@ public class StaffApplicationDetailViewModel
     /// <summary>true = người xem là cán bộ tuyển sinh (được xử lý). Quản trị viên chỉ xem.</summary>
     public bool CanProcess { get; init; }
 }
+
+// ===== S4-05, S4-06: Thống kê tuyển sinh =====
+
+/// <summary>Một dòng thống kê (theo ngành hoặc theo phương thức).</summary>
+public class StatisticRow
+{
+    public string Code { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+    public int Count { get; init; }
+    public double Percentage { get; init; }
+}
+
+/// <summary>Một dòng thống kê theo trạng thái hồ sơ.</summary>
+public class StatusStatisticRow
+{
+    public byte StatusId { get; init; }
+    public string StatusCode { get; init; } = string.Empty;
+    public string StatusName { get; init; } = string.Empty;
+    public int Count { get; init; }
+    public double Percentage { get; init; }
+    public string BadgeClass { get; init; } = string.Empty;
+}
+
+/// <summary>Dữ liệu màn hình Thống kê tuyển sinh cho Cán bộ và Quản trị viên.</summary>
+public class StaffStatisticsViewModel
+{
+    public int? RoundId { get; init; }
+    public List<AdmissionRound> Rounds { get; init; } = [];
+    public int TotalApplications { get; init; }
+    public List<StatisticRow> MajorRows { get; init; } = [];
+    public List<StatisticRow> MethodRows { get; init; } = [];
+    public List<StatusStatisticRow> StatusRows { get; init; } = [];
+}

@@ -1,19 +1,22 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-    (string Controller, string Label)[] items =
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    (string Controller, string Action, string Label)[] items =
     [
-        ("Admin", "Tổng quan"),
-        ("Majors", "Ngành học"),
-        ("AdmissionMethods", "Phương thức"),
-        ("AdmissionRounds", "Đợt tuyển sinh"),
-        ("Quotas", "Chỉ tiêu & áp dụng")
+        ("Admin", "Index", "Tổng quan"),
+        ("StaffApplications", "Statistics", "Thống kê tuyển sinh"),
+        ("Majors", "Index", "Ngành học"),
+        ("AdmissionMethods", "Index", "Phương thức"),
+        ("AdmissionRounds", "Index", "Đợt tuyển sinh"),
+        ("Quotas", "Index", "Chỉ tiêu & áp dụng")
     ];
 }
 <nav aria-label="Chức năng quản trị">
     @foreach (var item in items)
     {
-        var selected = string.Equals(currentController, item.Controller, StringComparison.OrdinalIgnoreCase);
-        <a asp-controller="@item.Controller" asp-action="Index"
+        var selected = string.Equals(currentController, item.Controller, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(currentAction, item.Action, StringComparison.OrdinalIgnoreCase);
+        <a asp-controller="@item.Controller" asp-action="@item.Action"
            class="@(selected ? "selected" : null)" aria-current="@(selected ? "page" : null)">
             @item.Label
             @if (selected) { <span aria-hidden="true">↗</span> }

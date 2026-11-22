@@ -350,6 +350,18 @@ public sealed class ApplicationFormController(ApplicationDbContext db, UserManag
 
         if (application is null) return NotFound();
 
+        // S4-04: lịch sử cập nhật trạng thái cho thí sinh xem (không hiện tên cán bộ)
+        ViewData["History"] = await db.ApplicationStatusHistories.AsNoTracking()
+            .Where(h => h.ApplicationId == application.Id)
+            .OrderBy(h => h.ChangedAt).ThenBy(h => h.Id)
+            .Select(h => new CandidateHistoryRow
+            {
+                FromStatus = h.FromStatus!.Name,
+                ToStatus = h.ToStatus!.Name,
+                ChangedAt = h.ChangedAt,
+                Note = h.Note
+            }).ToListAsync(ct);
+
         return View(application);
     }
 

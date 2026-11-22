@@ -1,0 +1,120 @@
+﻿@model StaffApplicationListViewModel
+@{
+    ViewData["Title"] = "Hồ sơ xét tuyển";
+    string BadgeClass(byte id) => id switch
+    {
+        1 => "st-pending",
+        2 => "st-review",
+        3 => "st-supplement",
+        4 => "st-approved",
+        5 => "st-rejected",
+        _ => "st-pending"
+    };
+    var filtering = !string.IsNullOrEmpty(Model.Search) || Model.MajorId.HasValue || Model.StatusId.HasValue;
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/staff-applications.css" asp-append-version="true" />
+}
+
+<div class="shell management-page">
+    <header class="management-heading">
+        <div>
+            <span class="eyebrow">KHU VỰC CÁN BỘ</span>
+            <h1>Hồ sơ xét tuyển</h1>
+            <p>Tìm theo mã hồ sơ hoặc họ tên, lọc theo ngành và trạng thái, rồi mở chi tiết để xem hoặc xử lý hồ sơ.</p>
+        </div>
+    </header>
+
+    <form asp-action="Index" method="get" class="filter-bar">
+        <label for="q">
+            Mã hồ sơ hoặc họ tên
+            <input id="q" name="q" value="@Model.Search" maxlength="100" placeholder="Ví dụ: HS2027-000001 hoặc Nguyễn Văn An" />
+        </label>
+        <label for="majorId">
+            Ngành
+            <select id="majorId" name="majorId">
+                <option value="">-- Tất cả ngành --</option>
+                @foreach (var major in Model.Majors)
+                {
+                    <option value="@major.Id" selected="@(major.Id == Model.MajorId)">@major.Code — @major.Name</option>
+                }
+            </select>
+        </label>
+        <label for="statusId">
+            Trạng thái
+            <select id="statusId" name="statusId">
+                <option value="">-- Tất cả trạng thái --</option>
+                @foreach (var status in Model.Statuses)
+                {
+                    <option value="@status.Id" selected="@(status.Id == Model.StatusId)">@status.Name</option>
+                }
+            </select>
+        </label>
+        <button type="submit" class="button button-primary">Tìm kiếm</button>
+        @if (filtering)
+        {
+            <a class="text-link" asp-action="Index">Bỏ lọc <span aria-hidden="true">×</span></a>
+        }
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty-state">
+            <h3>@(filtering ? "Không tìm thấy hồ sơ phù hợp" : "Chưa có hồ sơ nào")</h3>
+            <p>@(filtering ? "Thử đổi từ khóa hoặc bỏ bớt bộ lọc." : "Hồ sơ sẽ xuất hiện ở đây khi thí sinh nộp hồ sơ.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <caption>@Model.TotalCount hồ sơ · trang @Model.Page / @Model.TotalPages</caption>
+                <thead>
+                    <tr>
+                        <th>Mã hồ sơ</th>
+                        <th>Họ và tên</th>
+                        <th>Ngành</th>
+                        <th>Phương thức</th>
+                        <th>Đợt</th>
+                        <th>Thời gian nộp</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td><a class="code-chip" asp-action="Details" asp-route-id="@item.Id">@item.ApplicationCode</a></td>
+                            <td>@item.FullName</td>
+                            <td><strong>@item.MajorName</strong><br /><small>Mã: @item.MajorCode</small></td>
+                            <td>@item.MethodName</td>
+                            <td>@item.RoundName</td>
+                            <td>@item.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><span class="st-badge @BadgeClass(item.StatusId)">@item.StatusName</span></td>
+                            <td><a class="button button-outline button-small" asp-action="Details" asp-route-id="@item.Id">Mở chi tiết →</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="pager" aria-label="Phân trang">
+                @if (Model.Page > 1)
+                {
+                    <a class="button button-outline button-small" asp-action="Index" asp-route-q="@Model.Search"
+                       asp-route-majorId="@Model.MajorId" asp-route-statusId="@Model.StatusId" asp-route-page="@(Model.Page - 1)">← Trước</a>
+                }
+                <span>Trang @Model.Page / @Model.TotalPages</span>
+                @if (Model.Page < Model.TotalPages)
+                {
+                    <a class="button button-outline button-small" asp-action="Index" asp-route-q="@Model.Search"
+                       asp-route-majorId="@Model.MajorId" asp-route-statusId="@Model.StatusId" asp-route-page="@(Model.Page + 1)">Sau →</a>
+                }
+            </nav>
+        }
+    }
+</div>

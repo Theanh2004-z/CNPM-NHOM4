@@ -6,11 +6,23 @@
     var major = rmm?.RoundMajor?.Major;
     var method = rmm?.Method;
     var statusName = Model.Status?.Name ?? "Chờ tiếp nhận";
+    var history = ViewData["History"] as List<CandidateHistoryRow> ?? new List<CandidateHistoryRow>();
+    var latest = history.LastOrDefault();
+    string BadgeClass(byte id) => id switch
+    {
+        1 => "st-pending",
+        2 => "st-review",
+        3 => "st-supplement",
+        4 => "st-approved",
+        5 => "st-rejected",
+        _ => "st-pending"
+    };
 }
 @section Styles
 {
     <link rel="stylesheet" href="~/css/candidate.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/application-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/candidate-status.css" asp-append-version="true" />
     <style>
         .status-badge-pending {
             background: #fef9c3;
@@ -24,6 +36,7 @@
             align-items: center;
             gap: 6px;
         }
+
         .status-badge-approved {
             background: #dcfce7;
             color: #166534;
@@ -33,6 +46,7 @@
             font-size: 0.85rem;
             font-weight: 600;
         }
+
         .code-display {
             font-family: monospace;
             font-size: 1.25rem;
@@ -40,27 +54,31 @@
             letter-spacing: 0.5px;
             color: var(--teal);
         }
+
         .table-scores {
             width: 100%;
             border-collapse: collapse;
             margin-top: 12px;
         }
-        .table-scores th, .table-scores td {
-            padding: 10px 14px;
-            border: 1px solid #e2e8f0;
-            text-align: left;
-        }
-        .table-scores th {
-            background: #f8fafc;
-            font-size: 0.82rem;
-            color: var(--muted);
-        }
-        .table-scores td.score-val {
-            font-weight: 700;
-            color: var(--ink);
-            text-align: right;
-            width: 120px;
-        }
+
+            .table-scores th, .table-scores td {
+                padding: 10px 14px;
+                border: 1px solid #e2e8f0;
+                text-align: left;
+            }
+
+            .table-scores th {
+                background: #f8fafc;
+                font-size: 0.82rem;
+                color: var(--muted);
+            }
+
+            .table-scores td.score-val {
+                font-weight: 700;
+                color: var(--ink);
+                text-align: right;
+                width: 120px;
+            }
     </style>
 }
 
@@ -81,10 +99,7 @@
             <p>Thời điểm nộp: <strong>@Model.SubmittedAt.ToString("dd/MM/yyyy HH:mm:ss")</strong> (Giờ Việt Nam UTC+7)</p>
         </div>
         <div>
-            <span class="status-badge-pending" aria-label="Trạng thái hồ sơ">
-                <span class="status-dot" style="background:#eab308;" aria-hidden="true"></span>
-                @statusName
-            </span>
+            <span class="st-badge @BadgeClass(Model.StatusId)" aria-label="Trạng thái hồ sơ">@statusName</span>
         </div>
     </header>
 
@@ -117,6 +132,18 @@
             <p style="margin-top:12px;font-size:0.88rem;color:var(--muted);">
                 Hồ sơ của bạn đang ở trạng thái <strong>@statusName</strong>. Hội đồng tuyển sinh sẽ kiểm tra hồ sơ và cập nhật kết quả trong thời gian sớm nhất.
             </p>
+            @if (Model.StatusId == 3)
+            {
+                <div class="cand-callout" role="status"><strong>Hồ sơ cần bổ sung.</strong> @(string.IsNullOrWhiteSpace(latest?.Note) ? "Vui lòng liên hệ Hội đồng tuyển sinh để biết nội dung cần bổ sung." : latest!.Note)</div>
+            }
+            else if (Model.StatusId == 5)
+            {
+                <div class="cand-callout" role="status"><strong>Hồ sơ không được chấp nhận.</strong> @(string.IsNullOrWhiteSpace(latest?.Note) ? "Vui lòng liên hệ Hội đồng tuyển sinh để biết lý do." : latest!.Note)</div>
+            }
+            else if (Model.StatusId == 4)
+            {
+                <div class="cand-callout info" role="status"><strong>Hồ sơ hợp lệ.</strong> "Đã duyệt" chỉ có nghĩa hồ sơ của bạn hợp lệ, chưa phải kết quả trúng tuyển.</div>
+            }
         </section>
     </div>
 
@@ -169,6 +196,29 @@
             }
         </section>
     </div>
+
+    <section class="profile-panel" style="margin-top:20px;" aria-labelledby="history-title">
+        <h2 id="history-title">Lịch sử cập nhật hồ sơ</h2>
+        <ol class="cand-timeline">
+            @foreach (var row in history.AsEnumerable().Reverse())
+            {
+                <li>
+                    <span class="when">@row.ChangedAt.ToString("dd/MM/yyyy HH:mm:ss")</span>
+                    <strong>@row.ToStatus</strong>
+                    <span class="before">Trước đó: @row.FromStatus · Cập nhật bởi Hội đồng tuyển sinh</span>
+                    @if (!string.IsNullOrWhiteSpace(row.Note))
+                    {
+                        <p class="note"><strong>Ghi chú:</strong> @row.Note</p>
+                    }
+                </li>
+            }
+            <li>
+                <span class="when">@Model.SubmittedAt.ToString("dd/MM/yyyy HH:mm:ss")</span>
+                <strong>Đã nộp hồ sơ</strong>
+                <span class="before">Trạng thái ban đầu: Chờ tiếp nhận</span>
+            </li>
+        </ol>
+    </section>
 
     <div class="profile-actions" style="margin-top:28px;">
         <a class="button button-primary" asp-controller="ApplicationForm" asp-action="Index">Danh sách hồ sơ của tôi</a>

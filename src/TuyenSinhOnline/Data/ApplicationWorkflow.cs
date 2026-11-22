@@ -9,13 +9,17 @@ public static class ApplicationWorkflow
 {
     public static async Task<(bool Ok, string? Error)> ChangeStatusAsync(
         ApplicationDbContext db, int applicationId, ApplicationStatusEnum toStatus,
-        string officerUserId, string? note, CancellationToken ct = default)
+        string officerUserId, string? note, byte? expectedFromStatusId = null, CancellationToken ct = default)
     {
         var application = await db.AdmissionApplications.AsNoTracking()
             .SingleOrDefaultAsync(a => a.Id == applicationId, ct);
         if (application is null) return (false, "Không tìm thấy hồ sơ.");
 
         var from = application.StatusId;
+
+        // 0) Trạng thái cán bộ đang nhìn thấy còn đúng không? (tránh xử lý chồng chéo giữa 2 cán bộ)
+        if (expectedFromStatusId.HasValue && expectedFromStatusId.Value != from)
+            return (false, "Hồ sơ đã được người khác xử lý. Trang đã được tải lại với trạng thái mới nhất.");
         var to = (byte)toStatus;
 
         // 1) Cặp trạng thái này có được phép không?

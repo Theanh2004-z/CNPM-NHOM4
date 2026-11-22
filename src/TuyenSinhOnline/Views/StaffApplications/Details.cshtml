@@ -1,0 +1,162 @@
+﻿@model StaffApplicationDetailViewModel
+@{
+    var a = Model.Application;
+    ViewData["Title"] = $"Hồ sơ {a.ApplicationCode}";
+    var rmm = a.RoundMajorMethod;
+    var round = rmm?.RoundMajor?.Round;
+    var major = rmm?.RoundMajor?.Major;
+    var method = rmm?.Method;
+    string BadgeClass(byte id) => id switch
+    {
+        1 => "st-pending",
+        2 => "st-review",
+        3 => "st-supplement",
+        4 => "st-approved",
+        5 => "st-rejected",
+        _ => "st-pending"
+    };
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/staff-applications.css" asp-append-version="true" />
+}
+
+<div class="shell management-page staff-detail">
+    <a class="text-link" asp-action="Index"><span aria-hidden="true">←</span> Về danh sách hồ sơ</a>
+
+    @if (TempData["StaffSuccess"] is string ok)
+    {
+        <p class="notice success" role="status" style="margin-top:16px;">@ok</p>
+    }
+    @if (TempData["StaffError"] is string error)
+    {
+        <p class="notice error" role="alert" style="margin-top:16px;">@error</p>
+    }
+
+    <header class="management-heading" style="margin-top:16px;">
+        <div>
+            <span class="eyebrow">HỒ SƠ XÉT TUYỂN</span>
+            <h1>Mã hồ sơ: <span class="code-chip">@a.ApplicationCode</span></h1>
+            <p>Thời điểm nộp: <strong>@a.SubmittedAt.ToString("dd/MM/yyyy HH:mm:ss")</strong> (giờ Việt Nam)</p>
+        </div>
+        <div><span class="st-badge @BadgeClass(a.StatusId)">@(a.Status?.Name)</span></div>
+    </header>
+
+    <div class="panel-grid">
+        <section class="panel">
+            <h2>Thông tin thí sinh (tại thời điểm nộp)</h2>
+            <dl>
+                <dt>Họ và tên</dt>
+                <dd>@a.FullName</dd>
+                <dt>Ngày sinh</dt>
+                <dd>@a.DateOfBirth.ToString("dd/MM/yyyy")</dd>
+                <dt>Số điện thoại</dt>
+                <dd>@a.PhoneNumber</dd>
+                <dt>Email liên hệ</dt>
+                <dd>@a.ContactEmail</dd>
+                <dt>Trường THPT</dt>
+                <dd>@a.SchoolName (tốt nghiệp @a.GraduationYear)</dd>
+            </dl>
+        </section>
+        <section class="panel">
+            <h2>Nguyện vọng đăng ký</h2>
+            <dl>
+                <dt>Đợt tuyển sinh</dt>
+                <dd>@round?.Name (@round?.Code) · @round?.AdmissionYear</dd>
+                <dt>Ngành</dt>
+                <dd><strong>@major?.Name</strong> (@major?.Code)</dd>
+                <dt>Phương thức</dt>
+                <dd>@method?.Name (@method?.Code)</dd>
+            </dl>
+        </section>
+    </div>
+
+    <section class="panel wide">
+        <h2>Điểm đã khai</h2>
+        @if (a.Scores.Count == 0)
+        {
+            <p class="field-hint">Hồ sơ này chưa có dữ liệu điểm.</p>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Nội dung</th><th style="text-align:right;">Giá trị</th></tr></thead>
+                    <tbody>
+                        @foreach (var score in a.Scores.OrderBy(s => s.Id))
+                        {
+                            <tr><td>@score.FieldLabel</td><td style="text-align:right;"><strong>@score.Value.ToString("0.##")</strong></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    @if (Model.CanProcess)
+    {
+        <section class="panel wide process-panel">
+            <h2>Xử lý hồ sơ</h2>
+            @if (Model.Transitions.Count == 0)
+            {
+                <p class="field-hint">Hồ sơ đang ở trạng thái cuối nên không thể chuyển tiếp. Lưu ý: "Đã duyệt" chỉ có nghĩa hồ sơ hợp lệ, không đồng nghĩa trúng tuyển.</p>
+            }
+            else
+            {
+                <form asp-action="ChangeStatus" method="post">
+                    <input type="hidden" name="id" value="@a.Id" />
+                    <input type="hidden" name="expectedStatusId" value="@a.StatusId" />
+                    <div class="form-field">
+                        <label for="toStatusId">Chuyển sang trạng thái</label>
+                        <select id="toStatusId" name="toStatusId">
+                            @foreach (var option in Model.Transitions)
+                            {
+                                <option value="@option.ToStatusId">@option.ToStatusName@(option.RequiresNote ? " (bắt buộc ghi chú)" : "")</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="note">Ghi chú / lý do</label>
+                        <textarea id="note" name="note" rows="3" maxlength="500"></textarea>
+                        <p class="field-hint">Bắt buộc khi yêu cầu bổ sung, từ chối, hoặc xác nhận đã nhận bổ sung. Tối đa 500 ký tự.</p>
+                    </div>
+                    <button type="submit" class="button button-primary">Cập nhật trạng thái</button>
+                </form>
+            }
+        </section>
+    }
+    else
+    {
+        <p class="field-hint" style="margin-block:20px;">Bạn đang xem với quyền quản trị viên: chỉ xem, không xử lý hồ sơ.</p>
+    }
+
+    <section class="panel wide">
+        <h2>Lịch sử xử lý</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Thời điểm</th><th>Từ trạng thái</th><th>Sang trạng thái</th><th>Người xử lý</th><th>Ghi chú</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@a.SubmittedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td>—</td>
+                        <td>Chờ tiếp nhận</td>
+                        <td>@a.FullName (thí sinh)</td>
+                        <td>Nộp hồ sơ</td>
+                    </tr>
+                    @foreach (var row in Model.History)
+                    {
+                        <tr>
+                            <td>@row.ChangedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td>@row.FromStatus</td>
+                            <td>@row.ToStatus</td>
+                            <td>@row.ChangedBy</td>
+                            <td>@(string.IsNullOrWhiteSpace(row.Note) ? "—" : row.Note)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

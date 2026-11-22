@@ -36,6 +36,10 @@
                         { <a class="nav-link @(currentController == "ApplicationForm" ? "is-active" : "")" asp-controller="ApplicationForm" asp-action="Index">Hồ sơ đã nộp</a> }
                         @if (User.IsInRole(TuyenSinhOnline.Security.RoleNames.Administrator))
                         { <a class="nav-link" asp-controller="AdmissionRounds" asp-action="Index">Quản lý tuyển sinh</a> }
+                        @if (User.IsInRole(TuyenSinhOnline.Security.RoleNames.AdmissionsOfficer) || User.IsInRole(TuyenSinhOnline.Security.RoleNames.Administrator))
+                        {
+                            <a class="nav-link @(currentController == "StaffApplications" ? "is-active" : "")" asp-controller="StaffApplications" asp-action="Index">Hồ sơ xét tuyển</a>
+                        }
                     }
                 </div>
                 <div class="nav-actions">
